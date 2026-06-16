@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 
 from config import config
 from src.analysis.schema import Action, Flag, Recommendation
-from src.analysis.tickers import extract_candidates
+from src.analysis.tickers import company_name, extract_candidates
 from src.data.news_ingest import Article
 from src.data.youtube_ingest import TranscriptDoc
 
@@ -118,6 +118,31 @@ def _score_text(text: str, weight: float) -> tuple[float, float]:
     return pos, neg
 
 
+def _top_reasons(e: Evidence, want_positive: bool, k: int = 3) -> list[str]:
+    """
+    The actual headlines/quotes driving the verdict — the 'why'. Each candidate
+    is scored by net sentiment; we surface the ones pointing the same direction
+    as the overall call so the reader sees concrete catalysts, not just counts.
+    """
+    candidates: list[tuple[float, str]] = []
+    for art in e.articles:
+        p, n = _score_text(art.text, art.weight)
+        candidates.append((p - n, f"{art.title.strip()} ({art.source})"))
+    for channel, weight, text in e.transcript_snippets:
+        p, n = _score_text(text, weight)
+        snippet = text if len(text) <= 160 else text[:157] + "..."
+        candidates.append((p - n, f"“{snippet}” ({channel})"))
+
+    # Same-direction reasons first, strongest signal first.
+    relevant = [(s, t) for s, t in candidates if (s > 0) == want_positive and s != 0]
+    relevant.sort(key=lambda x: x[0], reverse=want_positive)
+    reasons = [t for _, t in relevant[:k]]
+    # Fall back to plain mentions if nothing carried explicit sentiment words.
+    if not reasons:
+        reasons = [t for _, t in candidates[:k]]
+    return reasons
+
+
 def _heuristic_one(e: Evidence) -> Recommendation:
     pos = neg = 0.0
     for _, weight, text in e.transcript_snippets:
@@ -133,11 +158,19 @@ def _heuristic_one(e: Evidence) -> Recommendation:
     score = round((pos - neg) / (pos + neg + 1.0), 3)
     flag, action = _flag_action(score)
 
-    n_sources = len(e.sources)
+    name = company_name(e.symbol)
+    direction = (
+        "Positive coverage" if score >= 0.15
+        else "Negative/cautious coverage" if score <= -0.15
+        else "Mixed / thin signal"
+    )
+    reasons = _top_reasons(e, want_positive=(score >= 0))
+    why = " | ".join(reasons) if reasons else "no clear catalyst in the evidence"
     rationale = (
-        f"Heuristic read: {e.mention_count} mention(s) across {n_sources} source(s) "
-        f"({', '.join(sorted(e.sources)) or 'n/a'}). "
-        f"Tone {pos:.1f} positive vs {neg:.1f} negative signals."
+        f"{name} ({e.symbol}). {direction}. "
+        f"Why: {why} "
+        f"[{e.mention_count} mention(s) across {len(e.sources)} source(s); "
+        f"tone {pos:.1f} positive vs {neg:.1f} negative]."
     )
     return Recommendation(
         ticker=e.symbol, flag=flag, sentiment_score=score,

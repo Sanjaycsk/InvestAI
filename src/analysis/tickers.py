@@ -62,6 +62,62 @@ TICKER_ALIASES: dict[str, list[str]] = {
 }
 
 
+# symbol -> exact listed company name (so "VEDL" is unambiguously Vedanta Ltd,
+# not Vedanta-anything-else). Keep in sync with TICKER_ALIASES.
+COMPANY_NAMES: dict[str, str] = {
+    "RELIANCE": "Reliance Industries Ltd",
+    "TCS": "Tata Consultancy Services Ltd",
+    "HDFCBANK": "HDFC Bank Ltd",
+    "ICICIBANK": "ICICI Bank Ltd",
+    "INFY": "Infosys Ltd",
+    "SBIN": "State Bank of India",
+    "HINDUNILVR": "Hindustan Unilever Ltd",
+    "ITC": "ITC Ltd",
+    "BHARTIARTL": "Bharti Airtel Ltd",
+    "KOTAKBANK": "Kotak Mahindra Bank Ltd",
+    "LT": "Larsen & Toubro Ltd",
+    "AXISBANK": "Axis Bank Ltd",
+    "BAJFINANCE": "Bajaj Finance Ltd",
+    "BAJAJFINSV": "Bajaj Finserv Ltd",
+    "ASIANPAINT": "Asian Paints Ltd",
+    "MARUTI": "Maruti Suzuki India Ltd",
+    "TATAMOTORS": "Tata Motors Ltd",
+    "TATASTEEL": "Tata Steel Ltd",
+    "SUNPHARMA": "Sun Pharmaceutical Industries Ltd",
+    "TITAN": "Titan Company Ltd",
+    "WIPRO": "Wipro Ltd",
+    "ULTRACEMCO": "UltraTech Cement Ltd",
+    "NESTLEIND": "Nestle India Ltd",
+    "POWERGRID": "Power Grid Corporation of India Ltd",
+    "NTPC": "NTPC Ltd",
+    "ONGC": "Oil & Natural Gas Corporation Ltd",
+    "COALINDIA": "Coal India Ltd",
+    "ADANIENT": "Adani Enterprises Ltd",
+    "ADANIPORTS": "Adani Ports & SEZ Ltd",
+    "HCLTECH": "HCL Technologies Ltd",
+    "TECHM": "Tech Mahindra Ltd",
+    "JSWSTEEL": "JSW Steel Ltd",
+    "TATAPOWER": "Tata Power Company Ltd",
+    "DMART": "Avenue Supermarts Ltd (DMart)",
+    "ZOMATO": "Eternal Ltd (formerly Zomato)",
+    "PAYTM": "One97 Communications Ltd (Paytm)",
+    "IRCTC": "Indian Railway Catering & Tourism Corp Ltd",
+    "DIVISLAB": "Divi's Laboratories Ltd",
+    "DRREDDY": "Dr. Reddy's Laboratories Ltd",
+    "CIPLA": "Cipla Ltd",
+    "GRASIM": "Grasim Industries Ltd",
+    "HINDALCO": "Hindalco Industries Ltd",
+    "VEDL": "Vedanta Ltd",
+    "DLF": "DLF Ltd",
+    "PIDILITIND": "Pidilite Industries Ltd",
+}
+
+
+def company_name(symbol: str) -> str:
+    """Exact listed company name for an NSE symbol (falls back to the symbol)."""
+    return COMPANY_NAMES.get(symbol.upper(), symbol.upper())
+
+
 def _compile() -> list[tuple[str, re.Pattern]]:
     compiled = []
     for symbol, aliases in TICKER_ALIASES.items():

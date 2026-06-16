@@ -12,6 +12,7 @@ from typing import Iterable
 
 from config import config
 from src.analysis.schema import Action, Flag, Recommendation
+from src.analysis.tickers import company_name
 
 
 def _line(rec: Recommendation) -> str:
@@ -70,21 +71,37 @@ def format_discovery(recs: Iterable[Recommendation], top_n: int | None = None) -
     are research suggestions, not orders.
     """
     recs = list(recs)
-    shown = recs[:top_n] if top_n else recs
+    icon = {Flag.RED: "🔴", Flag.GREEN: "🟢", Flag.NEUTRAL: "⚪"}
+
+    # Buy/accumulate ideas (positive) vs avoid/exit calls (red). Show both — a
+    # "don't touch / get out" signal is as decision-useful as a buy idea.
+    positive = [r for r in recs if r.flag in (Flag.GREEN, Flag.NEUTRAL)]
+    red = [r for r in recs if r.flag is Flag.RED]
+    top = positive[:top_n] if top_n else positive
+
+    def _idea(i: int, r: Recommendation) -> str:
+        return (
+            f"<b>{i}. {icon[r.flag]} {r.ticker}</b> — {company_name(r.ticker)} — "
+            f"{r.recommended_action.value} (sentiment {r.sentiment_score:+.2f})\n"
+            f"    {r.rationale}"
+        )
 
     parts: list[str] = [
         "🔎 <b>Stock Ideas — from your channels &amp; blogs</b>",
-        f"<i>{len(recs)} ticker(s) discussed; showing top {len(shown)}.</i>",
+        f"<i>{len(recs)} ticker(s) discussed.</i>",
         "",
+        f"<b>✅ Ideas to consider ({len(top)})</b>",
     ]
-    if not shown:
-        parts.append("No tickers crossed the mention threshold today.")
-    for i, r in enumerate(shown, 1):
-        icon = {Flag.RED: "🔴", Flag.GREEN: "🟢", Flag.NEUTRAL: "⚪"}[r.flag]
-        parts.append(
-            f"<b>{i}. {icon} {r.ticker}</b> — {r.recommended_action.value} "
-            f"(sentiment {r.sentiment_score:+.2f})\n    {r.rationale}"
-        )
+    if top:
+        parts += [_idea(i, r) for i, r in enumerate(top, 1)]
+    else:
+        parts.append("<i>No positive ideas crossed the threshold today.</i>")
+
+    parts += ["", f"<b>🔴 Avoid / exit if held ({len(red)})</b>"]
+    if red:
+        parts += [_idea(i, r) for i, r in enumerate(red, 1)]
+    else:
+        parts.append("<i>No negative signals today.</i>")
 
     parts += [
         "",
