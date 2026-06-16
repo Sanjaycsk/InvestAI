@@ -1,0 +1,28 @@
+# Secrets — NEVER commit
+config/.env
+*.env
+!config/.env.example
+
+# Local state / audit DB
+data_store/
+*.db
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

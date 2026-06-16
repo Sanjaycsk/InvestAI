@@ -1,0 +1,25 @@
+{
+  "_comment": "Financial-blog / news RSS feeds for the Discovery layer. Add or remove freely. 'weight' (0-1) lets you trust some outlets more during synthesis. These are public RSS endpoints; if one stops working, just remove it.",
+  "feeds": [
+    {
+      "name": "Moneycontrol — Markets",
+      "weight": 0.8,
+      "url": "https://www.moneycontrol.com/rss/marketreports.xml"
+    },
+    {
+      "name": "Economic Times — Markets",
+      "weight": 0.8,
+      "url": "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"
+    },
+    {
+      "name": "LiveMint — Markets",
+      "weight": 0.7,
+      "url": "https://www.livemint.com/rss/markets"
+    },
+    {
+      "name": "Business Standard — Markets",
+      "weight": 0.7,
+      "url": "https://www.business-standard.com/rss/markets-106.rss"
+    }
+  ]
+}

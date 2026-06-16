@@ -1,0 +1,40 @@
+# ============================================================
+# Investment Research & Management System — dependencies
+# ============================================================
+# Core data + math
+pandas>=2.2
+numpy>=1.26
+
+# Config / secrets
+python-dotenv>=1.0
+
+# Zerodha brokerage (PAID: Kite Connect subscription required)
+kiteconnect>=4.2
+pyotp>=2.9            # for semi-automated daily Kite login (TOTP)
+
+# Price history for 200-DMA (free NSE/BSE daily candles)
+yfinance>=0.2.40
+
+# YouTube transcript ingestion (Discovery layer)
+youtube-transcript-api>=0.6.2
+
+# RSS parsing — YouTube channel upload feeds + financial-blog/news feeds
+feedparser>=6.0.11
+
+# Telegram alerts + approval buttons (v20+ is async)
+python-telegram-bot>=21.0
+
+# AI synthesis layer
+anthropic>=0.40
+
+# Scheduling (deployment-agnostic in-process cron)
+APScheduler>=3.10
+
+# Schemas / validation
+pydantic>=2.6
+
+# requests for misc HTTP (Kite login redirect, news fallbacks)
+requests>=2.31
+
+# ---- Optional: Bright Data (deeper news scraping) — uncomment to enable ----
+# brightdata-sdk>=1.0

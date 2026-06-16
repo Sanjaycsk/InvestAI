@@ -1,0 +1,29 @@
+{
+  "_comment": "Trusted YouTube sources for the Discovery layer. 'weight' (0-1) lets you trust some voices more than others during synthesis. 'language' picks which transcript track to fetch (te=Telugu, ta=Tamil, en=English, hi=Hindi). The uploads RSS feed is read newest-first, so the latest videos are always picked up.",
+  "channels": [
+    {
+      "name": "Day Trader Telugu",
+      "weight": 0.7,
+      "language": "te",
+      "urls": [
+        "https://www.youtube.com/@daytradertelugu"
+      ]
+    },
+    {
+      "name": "Money Pechu",
+      "weight": 0.7,
+      "language": "ta",
+      "urls": [
+        "https://www.youtube.com/@MoneyPechu"
+      ]
+    },
+    {
+      "name": "Pranjal Kamra",
+      "weight": 0.8,
+      "language": "en",
+      "urls": [
+        "https://www.youtube.com/@pranjalkamra"
+      ]
+    }
+  ]
+}

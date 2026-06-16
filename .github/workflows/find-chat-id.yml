@@ -1,0 +1,31 @@
+name: Find Telegram Chat ID
+
+# One-time helper. Run this manually (Actions tab -> this workflow -> "Run
+# workflow") AFTER you've sent your bot a message in Telegram. It prints your
+# numeric CHAT_ID in the run logs; copy that into the TELEGRAM_CHAT_ID secret.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  find-chat-id:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+
+      - name: Print chat id
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python -m scripts.find_chat_id
