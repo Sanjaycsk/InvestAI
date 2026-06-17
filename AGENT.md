@@ -13,10 +13,12 @@ RemoteTrigger `update` action.
   - model: `claude-sonnet-4-6`
   - manage: https://claude.ai/code/routines/trig_01SYmjbgEdjKHhQpFozrfJjZ
 
-## The 12 stocks (fixed universe, NSE)
-RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC, HINDUNILVR, LT,
-MARUTI, SUNPHARMA, TATASTEEL. (yfinance: append `.NS`.) No other tickers are
-ever referenced — the Replacement-Stock agent is intentionally disabled.
+## The 14 instruments (fixed universe, NSE)
+**Equities (12):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
+HINDUNILVR, LT, MARUTI, SUNPHARMA, TATASTEEL.
+**Commodity ETFs (2):** GOLDBEES (Gold ETF), SILVERBEES (Silver ETF) — added so
+the trusted YouTube channels (which discuss gold/silver heavily) actually apply.
+No other tickers are ever referenced — the Replacement-Stock agent is disabled.
 
 ## Memory = Notion (page "INVESTAI")
 - page id: `3824a313-fee2-81a8-b70c-f5ecf2183fe3`
@@ -30,8 +32,9 @@ ever referenced — the Replacement-Stock agent is intentionally disabled.
     Correctable Errors, Market-Driven Misses, Lessons, Summary
 
 ## Scoring framework
-Weighted composite (0-100): **Fundamental 30 · Technical 20 · Valuation 20 ·
-Macro 15 · Sentiment 5 · Risk 10**. Risk has veto power.
+Weighted composite (0-100), weights depend on instrument type. Risk has veto power.
+- **Equities (12):** Fundamental 30 · Technical 20 · Valuation 20 · Macro 15 · Sentiment 5 · Risk 10
+- **Commodity ETFs (GOLDBEES, SILVERBEES):** Fundamental/Valuation N/A → Technical 35 · Macro 30 · Sentiment 25 · Risk 10 (YouTube-heavy, since those channels are commodity-focused)
 
 Categories → verdict:
 - Strong Buy (>80) → BUY
@@ -41,7 +44,9 @@ Categories → verdict:
 - Avoid/Sell (<45) → SELL
 
 ## Data sources
-- Prices / technicals: `yfinance` (`<SYM>.NS`) — works on datacenter IP.
+- Prices / technicals: **WEB only** (Google Finance / Moneycontrol / Tickertape /
+  Investing / NSE). ⚠️ **yfinance/Yahoo is BLOCKED in the Anthropic cloud sandbox** —
+  do NOT use it; read the published price/RSI/MACD/DMA numbers off the sites.
 - Fundamentals / valuation: screener.in / Tickertape / Moneycontrol (WebFetch).
 - Macro / geopolitics: WebSearch.
 - Sentiment (trusted YouTube channels, lowest weight): the public file
