@@ -13,11 +13,13 @@ RemoteTrigger `update` action.
   - model: `claude-sonnet-4-6`
   - manage: https://claude.ai/code/routines/trig_01SYmjbgEdjKHhQpFozrfJjZ
 
-## The 14 instruments (fixed universe, NSE)
-**Equities (12):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
-HINDUNILVR, LT, MARUTI, SUNPHARMA, TATASTEEL.
+## The 24 instruments (fixed universe, NSE)
+**Equities (21):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
+HINDUNILVR, LT, MARUTI, SUNPHARMA, TATASTEEL, SBIN, FEDERALBNK, SUZLON,
+TATAPOWER, WAAREEENER, NTPC, ADANIENT, BEL, BHEL.
+**Index ETF (1):** GROWWN200 (Groww Nifty 200 ETF — broad-market proxy).
 **Commodity ETFs (2):** GOLDBEES (Gold ETF), SILVERBEES (Silver ETF) — added so
-the trusted YouTube channels (which discuss gold/silver heavily) actually apply.
+the gold/silver-heavy YouTube channels actually apply.
 No other tickers are ever referenced — the Replacement-Stock agent is disabled.
 
 ## Memory = Notion (page "INVESTAI")
@@ -33,8 +35,13 @@ No other tickers are ever referenced — the Replacement-Stock agent is disabled
 
 ## Scoring framework
 Weighted composite (0-100), weights depend on instrument type. Risk has veto power.
-- **Equities (12):** Fundamental 30 · Technical 20 · Valuation 20 · Macro 15 · Sentiment 5 · Risk 10
-- **Commodity ETFs (GOLDBEES, SILVERBEES):** Fundamental/Valuation N/A → Technical 35 · Macro 30 · Sentiment 25 · Risk 10 (YouTube-heavy, since those channels are commodity-focused)
+- **Equities (21):** Fundamental 30 · Technical 20 · Valuation 20 · Macro 15 · Sentiment 5 · Risk 10
+- **Index ETF (GROWWN200):** Fundamental N/A → Macro 40 · Technical 35 · Valuation 15 · Sentiment 10
+- **Commodity ETFs (GOLDBEES, SILVERBEES):** Fundamental/Valuation N/A → Technical 35 · Macro 30 · Sentiment 25 · Risk 10
+
+## Logging is overwrite-safe
+Re-running a given day **updates** that day's rows per ticker instead of
+duplicating — so a rerun cleanly overwrites today's data.
 
 Categories → verdict:
 - Strong Buy (>80) → BUY
