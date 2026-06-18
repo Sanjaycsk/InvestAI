@@ -51,6 +51,7 @@
   .w-git{background:linear-gradient(135deg,#444b57,#2c313a)}
   .w-cloud{background:linear-gradient(135deg,#0b1f3a,#1f4e79)}
   .w-notion{background:linear-gradient(135deg,#2f8f6b,#1f6b4e)}
+  .w-app{background:linear-gradient(135deg,#6c4cd1,#4a2fb0)}
   .lane .where small{font-weight:500;opacity:.8;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
   .lane .what{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink)}
   .lane .what b{color:var(--navy)}
@@ -94,6 +95,7 @@
       <div class="pill">📊 24 instruments tracked daily</div>
       <div class="pill">🎯 Self-scored accuracy</div>
       <div class="pill">🧠 Learns from each day</div>
+      <div class="pill">📱 Live mobile dashboard</div>
       <div class="pill">🔍 Fully auditable</div>
       <div class="pill">🙅 Never auto-trades</div>
     </div>
@@ -138,6 +140,11 @@
       <div class="lane">
         <div class="where w-notion"><small>Notion · the memory</small>Auditable Database</div>
         <div class="what">Two databases — <b>Recommendations</b> (every call + the reasoning behind each factor) and <b>Daily Review</b> (accuracy, self-rating, mistakes, lessons). This is the permanent, human-readable audit trail that makes the agent accountable.</div>
+      </div>
+      <div class="lane">
+        <div class="where w-app"><small>Phone / Web · the dashboard</small>Mobile Dashboard (PWA)</div>
+        <div class="what">A passcode-protected mobile app that reads the Notion databases <b>live</b> and surfaces the day at a glance — today's Buy / Sell calls, a market-sentiment gauge, a dedicated Gold &amp; Silver panel, the accuracy trend, and yesterday's graded results.
+          <b>Why here:</b> deployed as a cloud web app (installable on the home screen) so it's available anywhere, even when the home PC is off — while the Notion key stays server-side, never exposed to the browser.</div>
       </div>
     </div>
     <p class="note">Design principle: each layer is independent and replaceable. The data feed, the reasoning, and the memory never depend on each other's internals — only on a shared, documented contract.</p>
@@ -242,13 +249,36 @@
 
 <section>
   <div class="wrap">
-    <h2><span class="num">08</span>Honest limitations</h2>
+    <h2><span class="num">08</span>See it anywhere — the mobile dashboard</h2>
+    <p class="lead">The agent's output isn't buried in a database. A lightweight mobile app surfaces the day's verdict at a glance — and only people you trust can open it.</p>
+    <div class="grid g3">
+      <div class="card"><div class="kicker">Today</div><h4>Buy / Sell at a glance</h4>
+        <p>The day's BUY and SELL calls, ranked by conviction, plus a dedicated <b>Gold &amp; Silver</b> panel for the commodity ETFs.</p></div>
+      <div class="card"><div class="kicker">Sentiment</div><h4>Market-mood gauge</h4>
+        <p>A bullish-to-crash gauge derived from the breadth of the day's calls, with a plain-language one-line read.</p></div>
+      <div class="card"><div class="kicker">Track record</div><h4>Accuracy, live</h4>
+        <p>Headline accuracy, a 7-day trend chart, a paper-strategy tally, and yesterday's graded results marked ✓ / ✗.</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h4>Installs like an app</h4>
+        <p>A Progressive Web App — open the link on a phone and "Add to Home Screen" for a full-screen icon. No app store; works on iPhone and Android.</p></div>
+      <div class="card"><h4>Private by passcode</h4>
+        <p>A shared passcode gates access, so only people given the code can view the calls. It holds no data of its own — it reads the Notion memory live and is always in sync with the agent.</p></div>
+    </div>
+    <p class="note">Built with Next.js and deployed on Vercel. It is a read-only view: like the agent itself, it never places a trade.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">09</span>Honest limitations</h2>
     <p class="lead">Being upfront about what it can't do is part of why the rest can be trusted.</p>
     <div class="limit">
       <ul>
         <li><b>Markets are uncertain.</b> Even a perfectly reasoned call can be wrong — that's why every call is graded and "market-driven misses" are treated as acceptable, not hidden.</li>
         <li><b>No private or insider data.</b> It uses only public web data and public analyst commentary. It cannot see what the market doesn't.</li>
         <li><b>Daily cadence, not intraday.</b> It makes one considered call per day — it is not a high-frequency or live-tick system.</li>
+        <li><b>The dashboard mirrors the agent, not the market.</b> Its sentiment gauge and paper-strategy tally are derived from the agent's own calls — a clear summary of what the agent thinks, not an independent market signal or a real backtest.</li>
         <li><b>Not financial advice.</b> It is a research and education tool. Always do your own due diligence; a human makes the final decision.</li>
       </ul>
     </div>
@@ -259,7 +289,7 @@
   <div class="wrap">
     <p><b>InvestAI</b> — a self-grading, fully-auditable equity research agent built on Claude (Anthropic).
        Research &amp; education only; not financial advice.</p>
-    <p class="stamp">Architecture: Home transcript feed → public GitHub → Claude cloud agent → Notion audit database. Model: Claude Sonnet 4.6.</p>
+    <p class="stamp">Architecture: Home transcript feed → public GitHub → Claude cloud agent → Notion audit database → mobile dashboard (PWA). Model: Claude Sonnet 4.6.</p>
   </div>
 </footer>
 

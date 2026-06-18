@@ -158,6 +158,20 @@
   <line x1="1072" y1="480" x2="1072" y2="556" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="1080" y="524" class="alink">daily brief</text>
 
+  <!-- ===== Mobile Dashboard ===== -->
+  <g filter="url(#sh)">
+    <rect x="470" y="548" width="340" height="96" rx="14" fill="#ffffff" stroke="#d8deea"/>
+    <rect x="470" y="548" width="6" height="96" rx="3" fill="#6c4cd1"/>
+  </g>
+  <text x="492" y="576" class="tag">PHONE / WEB · PWA</text>
+  <text x="492" y="598" class="lbl">Mobile Dashboard</text>
+  <text x="492" y="618" class="desc">today's Buy / Sell · market-sentiment gauge ·</text>
+  <text x="492" y="634" class="desc">Gold &amp; Silver · accuracy trend · passcode-gated</text>
+
+  <!-- Notion -> Dashboard (reads live) -->
+  <path d="M905,458 C845,476 858,556 812,566" fill="none" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="850" y="512" class="alink">reads live</text>
+
   <!-- ===== Legend ===== -->
   <text x="40" y="600" class="tag">DATA FLOW</text>
   <line x1="40" y1="616" x2="80" y2="616" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
@@ -171,6 +185,7 @@
   <rect x="350" y="700" width="14" height="14" rx="3" fill="#0b1f3a"/><text x="370" y="712" class="desc">Anthropic Cloud</text>
   <rect x="520" y="700" width="14" height="14" rx="3" fill="#2f8f6b"/><text x="540" y="712" class="desc">Notion / Web</text>
   <rect x="660" y="700" width="14" height="14" rx="3" fill="#c79a3b"/><text x="680" y="712" class="desc">Human</text>
+  <rect x="770" y="700" width="14" height="14" rx="3" fill="#6c4cd1"/><text x="790" y="712" class="desc">Dashboard (app)</text>
 
   <text x="40" y="744" class="cap">Research &amp; education only · not financial advice · model: Claude Sonnet 4.6</text>
 </svg>
