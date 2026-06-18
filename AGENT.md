@@ -65,8 +65,12 @@ Categories → verdict:
 1. **Review & grade yesterday** — pull `Outcome = Pending` rows, fetch actual
    closes, mark Correct/Wrong + Actual Move %, compute Accuracy % and Self
    Rating /100, classify misses (correctable vs market), write a Daily Review row.
-2. **Analyze today** — 6-factor weighted score per stock → category → verdict.
-3. **Log today** — one Recommendations row per stock, `Outcome = Pending`.
+1.5 **Learn** — read the last ~5 Daily Reviews and apply their correctable-error
+   lessons as standing rules for today (the agent actually improves, not just logs).
+2. **Analyze today** — per-type weighted 6-factor score → category → verdict,
+   with Step 1.5 corrections applied.
+3. **Log today** — one Recommendations row per instrument, `Outcome = Pending`
+   (overwrite-safe: re-running a day updates that day's rows).
 
 ## Phasing
 - **Phase 1 (live):** the loop above.
