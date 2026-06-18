@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0b1f3a" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6677"/>
+    </marker>
+    <marker id="arrowG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f8f6b"/>
+    </marker>
+    <style>
+      .title{fill:#0b1f3a;font-size:30px;font-weight:800}
+      .sub{fill:#5b6677;font-size:14.5px}
+      .lbl{fill:#1a2230;font-size:14px;font-weight:700}
+      .desc{fill:#5b6677;font-size:11.5px}
+      .cap{fill:#8a94a6;font-size:11px;font-style:italic}
+      .wlbl{fill:#ffffff;font-size:15px;font-weight:800}
+      .wsub{fill:#cdd9ec;font-size:11px}
+      .wtxt{fill:#ffffff;font-size:12px}
+      .tag{fill:#8a94a6;font-size:10.5px;font-weight:700;letter-spacing:1px}
+      .alink{fill:#5b6677;font-size:11px;font-weight:600}
+      .alinkG{fill:#2f8f6b;font-size:11px;font-weight:600}
+      .pillnum{fill:#c79a3b;font-size:13px;font-weight:800}
+      .pilltx{fill:#ffffff;font-size:11px;font-weight:600}
+    </style>
+  </defs>
+
+  <rect width="1280" height="760" fill="#f6f8fb"/>
+
+  <!-- Title -->
+  <text x="40" y="48" class="title">InvestAI — System Architecture</text>
+  <text x="40" y="72" class="sub">A self-grading equity research agent powered by Claude (Anthropic). Each layer lives where its data is actually reachable.</text>
+
+  <!-- ===== Top ingest row ===== -->
+  <!-- A: YouTube channels -->
+  <g filter="url(#sh)">
+    <rect x="40" y="110" width="205" height="80" rx="12" fill="#ffffff" stroke="#d8deea"/>
+    <rect x="40" y="110" width="6" height="80" rx="3" fill="#3a7bd5"/>
+  </g>
+  <text x="62" y="138" class="lbl">Trusted YouTube Channels</text>
+  <text x="62" y="158" class="desc">Telugu / Tamil / English</text>
+  <text x="62" y="174" class="desc">stock &amp; commodity analysts</text>
+
+  <!-- B: Home fetcher -->
+  <g filter="url(#sh)">
+    <rect x="305" y="110" width="225" height="80" rx="12" fill="#ffffff" stroke="#d8deea"/>
+    <rect x="305" y="110" width="6" height="80" rx="3" fill="#3a7bd5"/>
+  </g>
+  <text x="327" y="134" class="tag">RESIDENTIAL · HOME PC</text>
+  <text x="327" y="155" class="lbl">Transcript Fetcher</text>
+  <text x="327" y="174" class="desc">runs daily · wakes from sleep · pushes</text>
+
+  <!-- C: GitHub -->
+  <g filter="url(#sh)">
+    <rect x="590" y="100" width="240" height="100" rx="12" fill="#ffffff" stroke="#d8deea"/>
+    <rect x="590" y="100" width="6" height="100" rx="3" fill="#2c313a"/>
+  </g>
+  <text x="612" y="124" class="tag">PUBLIC · GITHUB</text>
+  <text x="612" y="146" class="lbl">Data &amp; Code Repository</text>
+  <text x="612" y="167" class="desc">• transcripts.json (data feed)</text>
+  <text x="612" y="184" class="desc">• agent prompt (version-controlled)</text>
+
+  <!-- arrows A->B->C -->
+  <line x1="245" y1="150" x2="300" y2="150" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="530" y1="150" x2="585" y2="150" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="250" y="142" class="cap">YouTube loads only from a home IP</text>
+
+  <!-- ===== Live Web ===== -->
+  <g filter="url(#sh)">
+    <rect x="40" y="345" width="220" height="108" rx="12" fill="#ffffff" stroke="#d8deea"/>
+    <rect x="40" y="345" width="6" height="108" rx="3" fill="#2f8f6b"/>
+  </g>
+  <text x="62" y="372" class="lbl">Live Web</text>
+  <text x="62" y="393" class="desc">news · prices · technicals</text>
+  <text x="62" y="410" class="desc">fundamentals · valuation</text>
+  <text x="62" y="427" class="desc">macro &amp; geopolitics</text>
+  <text x="62" y="446" class="cap">(cloud reaches the web directly)</text>
+
+  <!-- ===== Claude Agent (hero) ===== -->
+  <g filter="url(#sh)">
+    <rect x="360" y="262" width="470" height="256" rx="16" fill="#0b1f3a"/>
+  </g>
+  <text x="384" y="294" class="wlbl">CLAUDE CLOUD AGENT</text>
+  <text x="384" y="314" class="wsub">Anthropic · Claude Sonnet 4.6 · daily 08:30 IST · runs on the Claude plan (no API key)</text>
+
+  <!-- step pills -->
+  <g>
+    <rect x="384" y="332" width="100" height="78" rx="9" fill="#13315c"/>
+    <text x="396" y="352" class="pillnum">1</text>
+    <text x="396" y="372" class="pilltx">Review &amp;</text>
+    <text x="396" y="387" class="pilltx">grade</text>
+    <text x="396" y="402" class="pilltx">yesterday</text>
+  </g>
+  <g>
+    <rect x="494" y="332" width="100" height="78" rx="9" fill="#13315c"/>
+    <text x="506" y="352" class="pillnum">1.5</text>
+    <text x="506" y="372" class="pilltx">Learn from</text>
+    <text x="506" y="387" class="pilltx">past</text>
+    <text x="506" y="402" class="pilltx">reviews</text>
+  </g>
+  <g>
+    <rect x="604" y="332" width="100" height="78" rx="9" fill="#13315c"/>
+    <text x="616" y="352" class="pillnum">2</text>
+    <text x="616" y="372" class="pilltx">Analyze 24</text>
+    <text x="616" y="387" class="pilltx">6 factors,</text>
+    <text x="616" y="402" class="pilltx">weighted</text>
+  </g>
+  <g>
+    <rect x="714" y="332" width="100" height="78" rx="9" fill="#13315c"/>
+    <text x="726" y="352" class="pillnum">3</text>
+    <text x="726" y="372" class="pilltx">Decide &amp;</text>
+    <text x="726" y="387" class="pilltx">log to</text>
+    <text x="726" y="402" class="pilltx">memory</text>
+  </g>
+
+  <text x="384" y="442" class="wtxt">6-factor weighted score → Strong&#160;Buy / Buy / Watchlist / Hold / Avoid·Sell</text>
+  <text x="384" y="462" class="wtxt">→ a BUY / HOLD / SELL verdict per instrument. Risk can veto any call.</text>
+  <text x="384" y="494" class="wsub">It reasons like an analyst and explains every factor — not a fixed if/else script.</text>
+
+  <!-- arrows into Claude -->
+  <!-- GitHub -> Claude (reads transcripts + prompt) -->
+  <path d="M700,200 C700,236 640,236 632,260" fill="none" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="706" y="234" class="alink">reads data + prompt</text>
+  <!-- Web -> Claude -->
+  <line x1="260" y1="392" x2="356" y2="392" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="262" y="384" class="cap">researches</text>
+
+  <!-- ===== Notion ===== -->
+  <g filter="url(#sh)">
+    <rect x="905" y="300" width="335" height="180" rx="14" fill="#ffffff" stroke="#d8deea"/>
+    <rect x="905" y="300" width="6" height="180" rx="3" fill="#2f8f6b"/>
+  </g>
+  <text x="930" y="328" class="tag">WORKSPACE · NOTION</text>
+  <text x="930" y="351" class="lbl">Audit Memory (the track record)</text>
+  <text x="930" y="377" class="desc">• Recommendations — every call +</text>
+  <text x="930" y="393" class="desc">&#160;&#160;the reasoning behind each factor</text>
+  <text x="930" y="416" class="desc">• Daily Review — accuracy %, self-</text>
+  <text x="930" y="432" class="desc">&#160;&#160;rating, mistakes &amp; lessons</text>
+  <text x="930" y="460" class="cap">timestamped &amp; human-readable</text>
+
+  <!-- Claude <-> Notion -->
+  <line x1="832" y1="350" x2="901" y2="350" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="838" y="342" class="alink">writes verdicts</text>
+  <path d="M901,432 C865,432 865,452 832,452" fill="none" stroke="#2f8f6b" stroke-width="2" marker-end="url(#arrowG)"/>
+  <text x="838" y="472" class="alinkG">reads yesterday → grades &amp; learns</text>
+
+  <!-- ===== Human ===== -->
+  <g filter="url(#sh)">
+    <rect x="905" y="560" width="335" height="86" rx="14" fill="#ffffff" stroke="#d8deea"/>
+    <rect x="905" y="560" width="6" height="86" rx="3" fill="#c79a3b"/>
+  </g>
+  <text x="930" y="592" class="lbl">You — review &amp; decide</text>
+  <text x="930" y="614" class="desc">The agent only suggests. A human acts on it.</text>
+  <text x="930" y="632" class="desc">It never places a trade — blast radius of any call is zero.</text>
+
+  <!-- Notion -> Human -->
+  <line x1="1072" y1="480" x2="1072" y2="556" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="1080" y="524" class="alink">daily brief</text>
+
+  <!-- ===== Legend ===== -->
+  <text x="40" y="600" class="tag">DATA FLOW</text>
+  <line x1="40" y1="616" x2="80" y2="616" stroke="#5b6677" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="90" y="620" class="desc">information / control flow</text>
+  <line x1="40" y1="640" x2="80" y2="640" stroke="#2f8f6b" stroke-width="2" marker-end="url(#arrowG)"/>
+  <text x="90" y="644" class="desc">feedback / learning loop</text>
+
+  <text x="40" y="690" class="tag">ENVIRONMENTS</text>
+  <rect x="40" y="700" width="14" height="14" rx="3" fill="#3a7bd5"/><text x="60" y="712" class="desc">Home (residential)</text>
+  <rect x="210" y="700" width="14" height="14" rx="3" fill="#2c313a"/><text x="230" y="712" class="desc">Public GitHub</text>
+  <rect x="350" y="700" width="14" height="14" rx="3" fill="#0b1f3a"/><text x="370" y="712" class="desc">Anthropic Cloud</text>
+  <rect x="520" y="700" width="14" height="14" rx="3" fill="#2f8f6b"/><text x="540" y="712" class="desc">Notion / Web</text>
+  <rect x="660" y="700" width="14" height="14" rx="3" fill="#c79a3b"/><text x="680" y="712" class="desc">Human</text>
+
+  <text x="40" y="744" class="cap">Research &amp; education only · not financial advice · model: Claude Sonnet 4.6</text>
+</svg>
