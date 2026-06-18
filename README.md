@@ -1,113 +1,115 @@
-# Investment Research & Management System
+# InvestAI — Self-Grading Stock Research Agent
 
-A modular, **human-in-the-loop** assistant for mid-to-long-term equity holding.
-It reviews your portfolio, synthesizes expert opinion + news, and proposes
-actions — but **you** approve every trade. Nothing executes automatically.
+A daily, **autonomous** equity-research agent built on **Claude (Anthropic)**. Every
+morning it issues a **BUY / HOLD / SELL** verdict on a fixed 24-instrument NSE
+watchlist, then **grades its own previous calls against what actually happened**,
+scores its accuracy, and learns from its mistakes — with every decision logged and
+auditable.
 
-> ⚠️ **Safety first.** Two independent switches gate any real order:
-> `DUMMY_MODE` (default **True**) and `EXECUTION_ENABLED` (default **False**).
-> Both must be flipped *and* per-trade guardrails must pass before a single
-> rupee moves. Leave them at defaults until you've watched the system's
-> decisions for several days.
+> 📊 **Trust comes from accountability, not "the AI said so."** Every call is graded
+> against reality, logged with its reasoning, and the method is version-controlled
+> and open to inspection. A human makes every actual decision — the agent **never trades.**
 
----
-
-## The two-process model
-
-The approval *buttons* require a process that is always listening. So the
-system runs as two cooperating processes that share a SQLite state DB:
-
-| Process | File | Cadence | Job |
-|---|---|---|---|
-| **A — Analysis job** | `scripts/daily_summary.py` | once daily (cron/scheduler) | pull data → analyze → save recommendations → send brief |
-| **B — Approval bot** | `scripts/run_bot.py` | always-on | listen for your button taps → validate → route to execution |
-
-```
-holdings ─▶ price history ─▶ 200-DMA ─▶ Recommendation(schema)
-                                              │
-                                        [SQLite state DB] ◀── audit log
-                                              │
-                       Telegram brief + ✅/❌ buttons  (Process A)
-                                              │  (you tap)
-                       validate token+chat+TTL+guardrails  (Process B)
-                                              │
-                    DUMMY → simulate & log   |   LIVE → Kite order
-```
-
-The layers never import each other's logic — they agree only on the
-`Recommendation` schema (`src/analysis/schema.py`). That's what keeps it modular.
+📄 **Shareable explainer:** [`docs/how-it-works.html`](docs/how-it-works.html) ·
+📐 **Architecture diagram:** [`docs/architecture-diagram.svg`](docs/architecture-diagram.svg) ·
+🧠 **Agent definition (source of truth):** [`AGENT.md`](AGENT.md)
 
 ---
 
-## Layout
+## How it works (the daily loop)
 
-```
-config/        .env (secrets) · .env.example · channels.json · feeds.json · config.py
-src/data/      kite_client · price_data (200-DMA) · youtube_ingest · news_ingest (RSS)
-src/analysis/  schema (the contract) · technical (200-DMA) · tickers · synthesizer (Claude)
-src/notifier/  formatter · telegram_bot (summary + approval listener)
-src/execution/ order_manager (THE gate — disabled by default)
-src/store/     db (SQLite state + append-only audit log)
-scripts/       daily_summary.py (portfolio) · discover.py (YouTube+blogs) · run_bot.py
-tests/         test_technical.py · test_discovery.py
-```
+Runs unattended each morning (08:30 IST) as a scheduled **Claude cloud agent** —
+on the Claude plan, no API key:
 
----
+1. **Review & grade yesterday** — pull each pending call, read the actual close, mark
+   it Correct/Wrong, compute accuracy % and a self-rating /100.
+2. **Learn** — read the last ~5 daily reviews and apply their *correctable-error*
+   lessons as standing rules for today (genuine market-driven misses are left alone).
+3. **Analyze today** — score six factors per instrument and combine with weights tuned
+   to each instrument type.
+4. **Decide & log** — map the composite score to a category and a verdict, and write it
+   (with the reasoning for every factor) to the Notion audit database.
 
-## Quick start
+Full, verbatim instructions: [`agent/routine_prompt.md`](agent/routine_prompt.md).
 
-```powershell
-python -m venv .venv ; .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item config\.env.example config\.env   # then fill in values locally
-
-# Phase 1 — portfolio review (offline, DUMMY_MODE):
-python -m scripts.daily_summary
-
-# Discovery — YouTube + blogs -> stock ideas -> Telegram.
-# Try it offline first with zero keys (sample data + heuristic synthesis):
-$env:DISCOVERY_DRY_RUN = "True"; python -m scripts.discover
-
-pytest -q
-```
-
-For a *live* discovery run: set `DISCOVERY_DRY_RUN=False`, add your real channels
-to `config/channels.json`, optionally add `ANTHROPIC_API_KEY` (Claude synthesis;
-without it a transparent heuristic is used), and `TELEGRAM_BOT_TOKEN` +
-`TELEGRAM_CHAT_ID` to deliver instead of console-preview.
-
-With no Telegram token set, the brief prints to your console (read-only
-preview). Add `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` to deliver it for real.
+### Scoring (equities)
+Fundamental 30 · Technical 20 · Valuation 20 · Macro 15 · Sentiment 5 · Risk 10 (Risk
+can veto). Commodity & index ETFs use type-specific weights. Composite 0–100 →
+Strong Buy (>80) / Buy on Dip (70–80) / Watchlist (60–70) / Hold (45–60) / Avoid·Sell (<45).
 
 ---
 
-## Build phases
+## Architecture
 
-- **Phase 1 (built):** portfolio review · 200-DMA red/green flags · daily brief ·
-  approval-button plumbing · simulated execution · audit log.
-- **Discovery (built):** YouTube transcript ingestion (RSS video discovery +
-  `youtube-transcript-api`) · financial-blog/news via **RSS feeds** · ticker
-  recognition · **Claude synthesis** (heuristic fallback) →
-  `{ticker, sentiment_score, rationale, recommended_action}` · ranked ideas to
-  Telegram. Entry point: `scripts/discover.py`.
-- **Phase 3 (gated):** flip the toggles, enable live Kite orders behind the
-  guardrails. Run `security-review` before this phase.
+Four cooperating environments, each chosen for where its data is actually reachable:
+
+```
+YouTube ─▶ Home PC (residential) ─▶ Public GitHub ─┐
+                                                    ▼
+            Live Web ──────────────▶  CLAUDE CLOUD AGENT  ⇄  Notion (audit memory)
+                                      (review · learn ·            │
+                                       analyze · decide)           ▼
+                                                              You (decide)
+```
+
+- **Home PC** — fetches transcripts from trusted YouTube channels (YouTube only loads
+  from a residential IP). Companion repo: **[youtube-stock-reader](https://github.com/Sanjaycsk/youtube-stock-reader)**.
+- **Public GitHub** — holds the transcript data feed + the version-controlled agent prompt.
+- **Anthropic cloud** — the Claude agent reads the data, researches the live web, runs
+  the analysis, and grades itself. Model: `Claude Sonnet 4.6`.
+- **Notion** — the permanent, human-readable audit trail (`Recommendations` +
+  `Daily Review`).
+
+See [`AGENT.md`](AGENT.md) for IDs, schema, and the exact wiring.
 
 ---
 
-## Operational notes
+## The 24 instruments (fixed universe, NSE)
 
-- **Kite token expires daily (~06:00 IST).** No headless official refresh — run
-  the login flow each morning (`kite_client.print_login_instructions()`),
-  optionally semi-automated with `pyotp` + `KITE_TOTP_SECRET`.
-- **YouTube transcripts prefer a residential IP** (datacenter IPs get blocked) —
-  a factor when you choose where to deploy.
-- **Deployment is deliberately deferred.** The two-process split is host-neutral,
-  so it lifts to a Mumbai-region VPS or a home always-on machine with no code
-  change. Keep Process B alive with a process manager (Task Scheduler/NSSM on
-  Windows; systemd/pm2 on Linux).
+**Equities (21):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
+HINDUNILVR, LT, MARUTI, SUNPHARMA, TATASTEEL, SBIN, FEDERALBNK, SUZLON, TATAPOWER,
+WAAREEENER, NTPC, ADANIENT, BEL, BHEL
+**Index ETF (1):** GROWWN200 (Groww Nifty 200 ETF — market proxy)
+**Commodity ETFs (2):** GOLDBEES (Gold), SILVERBEES (Silver)
 
-## Guardrails (config/.env)
+---
 
-`MAX_ORDER_VALUE_INR` · `MAX_DAILY_TRADES` · `APPROVAL_TTL_MINUTES` — enforced in
-`order_manager` on every approval, after a fresh live-price re-check.
+## Why it can be trusted
+
+- **Held accountable daily** — every call is checked against the real close and scored;
+  wins *and* losses are recorded.
+- **Fully auditable** — each recommendation is stored with its reasoning, sources, and a
+  timestamp; nothing is ephemeral.
+- **Learns from mistakes** — errors are classified (fixable vs market) and fixable ones
+  become rules it applies the next day.
+- **No black box** — the agent's exact instructions are version-controlled here.
+- **Human-in-the-loop** — it only suggests; a person decides. It never auto-trades.
+
+### Honest limits
+Markets are uncertain; it uses only public data (no insider/private feeds); it is a
+once-daily (not intraday) tool; and it is **research/education only — not financial advice.**
+
+---
+
+## Repository layout
+
+```
+AGENT.md                     source-of-truth for the live cloud agent
+agent/routine_prompt.md      the exact prompt the agent runs (mirror of the routine)
+docs/how-it-works.html       shareable, non-technical explainer
+docs/architecture-diagram.svg  editable vector diagram (Figma-importable)
+config/  src/  scripts/  tests/   original local Python toolkit (200-DMA, RSS,
+                                   discovery, simulated execution) — the prototype
+                                   this evolved from; kept for local/offline use.
+```
+
+> The original Python pipeline (the earlier discovery/portfolio prototype) still runs
+> locally and offline, but the **live system is the Claude cloud agent** described above.
+
+---
+
+## Status
+
+A **45-day evaluation** of the agent's daily accuracy is underway. Telegram delivery of
+the daily brief is deferred; results currently land in the Notion audit database and the
+routine's run history.
