@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InvestAI — How It Works &amp; Why It's Trustworthy</title>
+<style>
+  :root{
+    --navy:#0b1f3a; --navy2:#13315c; --accent:#2f8f6b; --accent2:#3a7bd5;
+    --gold:#c79a3b; --ink:#1a2230; --muted:#5b6677; --line:#e4e8ef; --bg:#f6f8fb;
+    --card:#ffffff; --red:#c0392b; --amber:#c98a16; --green:#2f8f6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+  header.hero{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:54px 0 46px}
+  header.hero h1{margin:0 0 8px;font-size:34px;letter-spacing:.3px}
+  header.hero .tag{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+       padding:4px 12px;border-radius:999px;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase;margin-bottom:14px}
+  header.hero p{margin:6px 0 0;color:#cdd9 ;opacity:.92;font-size:17px;max-width:760px}
+  header.hero .pills{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px}
+  header.hero .pill{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:8px;
+       padding:7px 12px;font-size:13px}
+  section{padding:38px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:23px;margin:0 0 6px;color:var(--navy)}
+  h2 .num{color:var(--accent);font-weight:800;margin-right:8px}
+  .lead{color:var(--muted);margin:0 0 22px;font-size:15.5px}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--navy2)}
+  p{margin:10px 0}
+  code,.mono{font-family:"SF Mono",Consolas,Menlo,monospace;font-size:13px;background:#eef2f7;
+       padding:2px 6px;border-radius:5px;color:#22344d}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px;
+       box-shadow:0 1px 2px rgba(16,30,54,.04)}
+  .card h4{margin:0 0 6px;font-size:15px;color:var(--navy)}
+  .card p{margin:4px 0;font-size:14px;color:var(--muted)}
+  .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);font-weight:700}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{background:#f0f4f9;color:var(--navy);font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+  tr:last-child td{border-bottom:none}
+  .flow{display:flex;flex-direction:column;gap:0;margin:10px 0}
+  .lane{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:stretch;padding:14px 0;border-bottom:1px dashed var(--line)}
+  .lane:last-child{border-bottom:none}
+  .lane .where{font-weight:700;color:#fff;border-radius:10px;padding:14px;display:flex;flex-direction:column;justify-content:center;font-size:14px}
+  .w-home{background:linear-gradient(135deg,#3a7bd5,#2f5fb0)}
+  .w-git{background:linear-gradient(135deg,#444b57,#2c313a)}
+  .w-cloud{background:linear-gradient(135deg,#0b1f3a,#1f4e79)}
+  .w-notion{background:linear-gradient(135deg,#2f8f6b,#1f6b4e)}
+  .lane .where small{font-weight:500;opacity:.8;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+  .lane .what{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink)}
+  .lane .what b{color:var(--navy)}
+  .steps{counter-reset:s;margin:6px 0}
+  .step{position:relative;padding:12px 0 12px 46px;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:none}
+  .step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:12px;width:30px;height:30px;
+       background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .step.half:before{content:"1.5";font-size:11px;background:var(--accent)}
+  .step h4{margin:0 0 2px;font-size:15px;color:var(--navy)}
+  .step p{margin:2px 0;font-size:14px;color:var(--muted)}
+  .trust{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.trust{grid-template-columns:1fr}}
+  .trust .t{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:14px 16px}
+  .trust .t h4{margin:0 0 4px;font-size:15px;color:var(--navy)}
+  .trust .t p{margin:0;font-size:13.5px;color:var(--muted)}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:6px}
+  .b-green{background:#e6f3ee;color:var(--green)} .b-amber{background:#fbf1dd;color:var(--amber)}
+  .cat td:first-child{font-weight:700}
+  .limit{background:#fff7ed;border:1px solid #f3dcb8;border-radius:10px;padding:14px 16px}
+  .limit h4{margin:0 0 6px;color:#9a6b12}
+  .limit ul{margin:6px 0 0;padding-left:18px;color:#7a5a1e;font-size:14px}
+  footer{padding:26px 0;color:var(--muted);font-size:13px}
+  .stamp{font-size:12px;color:var(--muted)}
+  .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+  .pillrow span{background:#eef2f7;border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-size:12.5px;color:#33425a}
+  .note{font-size:13px;color:var(--muted);font-style:italic}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="tag">Powered by Claude · Anthropic</div>
+    <h1>InvestAI — A Self-Grading Stock Research Agent</h1>
+    <p>An autonomous research agent that issues a daily Buy / Hold / Sell verdict on a fixed 24-instrument
+       watchlist, then <b>grades its own calls against what actually happened</b> and learns from its mistakes —
+       with every decision logged and auditable.</p>
+    <div class="pills">
+      <div class="pill">🤖 Runs on Claude (Anthropic)</div>
+      <div class="pill">📊 24 instruments tracked daily</div>
+      <div class="pill">🎯 Self-scored accuracy</div>
+      <div class="pill">🧠 Learns from each day</div>
+      <div class="pill">🔍 Fully auditable</div>
+      <div class="pill">🙅 Never auto-trades</div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">01</span>What it actually does</h2>
+    <p class="lead">One disciplined job, every morning before the market opens.</p>
+    <div class="grid g3">
+      <div class="card"><div class="kicker">Decide</div><h4>A verdict per instrument</h4>
+        <p>For each of 24 fixed instruments it produces a BUY / HOLD / SELL call, a 0–100 conviction score, and a one-line reason — grounded in six independent factors.</p></div>
+      <div class="card"><div class="kicker">Grade</div><h4>Marks its own homework</h4>
+        <p>The next morning it pulls the actual closing prices, checks whether each prior call was right, and computes an accuracy % and a self-rating out of 100.</p></div>
+      <div class="card"><div class="kicker">Learn</div><h4>Improves over time</h4>
+        <p>It separates <b>correctable mistakes</b> (it misread the data) from <b>market noise</b> (a sound call the market moved against), and carries the lessons into the next day.</p></div>
+    </div>
+    <p class="note">It is a research assistant, not a trader. It only suggests — a human makes every decision. Nothing is bought or sold automatically.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">02</span>The architecture</h2>
+    <p class="lead">Four cooperating environments, each chosen because of where data is actually reachable. The brain runs in Anthropic's cloud; a small home job feeds it the one data source the cloud can't reach.</p>
+    <div class="flow">
+      <div class="lane">
+        <div class="where w-home"><small>Home PC · residential IP</small>YouTube Transcript Fetcher</div>
+        <div class="what">A small scheduled job pulls the latest transcripts from trusted stock-analysis YouTube channels.
+          <b>Why here:</b> YouTube blocks transcript access from datacenter IPs, but allows it from a home connection. Runs automatically each morning (wakes the PC from sleep), then pushes the data out.</div>
+      </div>
+      <div class="lane">
+        <div class="where w-git"><small>Public GitHub</small>Data &amp; Code Repository</div>
+        <div class="what">Holds the transcript data file (read by the cloud) and the <b>version-controlled agent definition</b> — the exact instructions the AI follows. Anyone can audit how the agent is told to think; every change is tracked in git history.</div>
+      </div>
+      <div class="lane">
+        <div class="where w-cloud"><small>Anthropic Cloud · the brain</small>Claude Agent (daily)</div>
+        <div class="what">A scheduled <b>Claude</b> agent. Each morning it reads the YouTube data, researches the live web, runs the six-factor analysis on all 24 instruments, grades yesterday, and writes results to memory.
+          <b>Why here:</b> reliable, datacenter-grade access to the web and to Claude's reasoning — and it runs unattended.</div>
+      </div>
+      <div class="lane">
+        <div class="where w-notion"><small>Notion · the memory</small>Auditable Database</div>
+        <div class="what">Two databases — <b>Recommendations</b> (every call + the reasoning behind each factor) and <b>Daily Review</b> (accuracy, self-rating, mistakes, lessons). This is the permanent, human-readable audit trail that makes the agent accountable.</div>
+      </div>
+    </div>
+    <p class="note">Design principle: each layer is independent and replaceable. The data feed, the reasoning, and the memory never depend on each other's internals — only on a shared, documented contract.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">03</span>How it uses Claude</h2>
+    <p class="lead">The agent <i>is</i> Claude — Anthropic's frontier reasoning model — not a hard-coded script of if/else rules.</p>
+    <div class="grid g2">
+      <div class="card"><h4>Reasoning, not rules</h4>
+        <p>Traditional screeners apply fixed formulas. Here, Claude reads live data and <b>reasons</b> about it the way an analyst would — weighing conflicting signals, judging context, and explaining itself in plain language.</p></div>
+      <div class="card"><h4>Agentic &amp; tool-using</h4>
+        <p>Claude autonomously decides what to research, runs web searches, fetches financial pages, reads the YouTube transcripts, and writes to the database — a multi-step loop, not a single answer.</p></div>
+      <div class="card"><h4>Professional methodology built in</h4>
+        <p>The analysis uses sector-appropriate metrics (e.g. ROE / asset-quality for banks, order-book / ROCE for industrials) and relative valuation against peers — methodology harvested from Anthropic's own financial-analysis toolkit.</p></div>
+      <div class="card"><h4>Self-critique</h4>
+        <p>Because it's a reasoning model, it can do something a formula can't: look back at its own past calls, judge what went wrong, and adjust — a genuine feedback loop.</p></div>
+    </div>
+    <p>Model: <code>Claude Sonnet 4.6</code>. It runs on a managed Claude plan — there is no separate API key or per-call billing to manage.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">04</span>The daily loop</h2>
+    <p class="lead">The same disciplined sequence runs every morning, unattended.</p>
+    <div class="steps">
+      <div class="step"><h4>Review &amp; grade yesterday</h4><p>Pull each pending call, read the actual closing price, mark it Correct or Wrong, and compute accuracy % + a self-rating out of 100.</p></div>
+      <div class="step half"><h4>Learn from past reviews</h4><p>Read the last ~5 days of lessons. Treat correctable mistakes as standing rules it must not repeat today. Leave genuine market-driven misses alone.</p></div>
+      <div class="step"><h4>Analyze today — all 24</h4><p>Score six factors (below), combine them with weights tuned to each instrument type, and apply yesterday's corrections.</p></div>
+      <div class="step"><h4>Decide &amp; log</h4><p>Map each composite score to a category and a BUY / HOLD / SELL verdict, then write it to Notion with the reasoning for every factor — ready to be graded tomorrow.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">05</span>The scoring framework</h2>
+    <p class="lead">Six independent factors, weighted by what actually matters for each instrument type. One signal never decides alone, and Risk can veto everything.</p>
+    <table>
+      <tr><th>Factor</th><th>What it measures</th><th>Equity weight</th></tr>
+      <tr><td><b>Fundamental</b></td><td>Sector-appropriate quality: growth, margins, ROE/ROCE, balance sheet, cash flow</td><td>30%</td></tr>
+      <tr><td><b>Technical</b></td><td>Trend, 50/200-day moving averages, RSI, MACD, support/resistance, volume</td><td>20%</td></tr>
+      <tr><td><b>Valuation</b></td><td>P/E, EV/EBITDA, PEG vs sector peers (quartiles) and the stock's own history</td><td>20%</td></tr>
+      <tr><td><b>Macro</b></td><td>Rates, currency, oil, policy, geopolitics relevant to the sector</td><td>15%</td></tr>
+      <tr><td><b>Sentiment</b></td><td>Trusted YouTube analysts + news (lowest weight by design)</td><td>5%</td></tr>
+      <tr><td><b>Risk</b></td><td>Concentration, drawdown, volatility, event risk — <b>has veto power</b></td><td>10%</td></tr>
+    </table>
+    <p class="note">Commodity ETFs (Gold, Silver) and the index ETF use different weightings — fundamentals don't apply to them, so technical, macro and trusted-analyst sentiment carry more.</p>
+    <h3>Composite score → recommendation</h3>
+    <table class="cat">
+      <tr><th>Score</th><th>Category</th><th>Verdict</th></tr>
+      <tr><td>&gt; 80</td><td>Strong Buy</td><td>BUY</td></tr>
+      <tr><td>70–80</td><td>Buy on Dip</td><td>BUY</td></tr>
+      <tr><td>60–70</td><td>Watchlist</td><td>HOLD</td></tr>
+      <tr><td>45–60</td><td>Hold</td><td>HOLD</td></tr>
+      <tr><td>&lt; 45</td><td>Avoid / Sell</td><td>SELL</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">06</span>The analyst "team" inside one agent</h2>
+    <p class="lead">The system is designed as a panel of specialist roles. Rather than 24 separate programs, a single Claude agent performs each role in sequence — same rigor, full transparency.</p>
+    <div class="grid g3">
+      <div class="card"><h4>Market Data</h4><p>Price, volume, trend across all instruments.</p></div>
+      <div class="card"><h4>Fundamental</h4><p>Growth, returns, balance-sheet quality.</p></div>
+      <div class="card"><h4>Technical</h4><p>Moving averages, RSI, MACD, levels.</p></div>
+      <div class="card"><h4>Valuation</h4><p>Multiples vs peers and own history.</p></div>
+      <div class="card"><h4>Macro &amp; Geopolitical</h4><p>Rates, currency, oil, policy, world events.</p></div>
+      <div class="card"><h4>Sentiment</h4><p>Trusted analysts + news, low weight.</p></div>
+      <div class="card"><h4>Risk</h4><p>Can override any call. Capital safety first.</p></div>
+      <div class="card"><h4>Portfolio Manager</h4><p>Combines all signals into one verdict.</p></div>
+      <div class="card"><h4>Performance &amp; Learning</h4><p>Grades results, attributes errors, updates behaviour.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">07</span>Why you can trust it</h2>
+    <p class="lead">Trust here doesn't rest on "the AI said so." It rests on accountability you can verify.</p>
+    <div class="trust">
+      <div class="t"><h4>It is held accountable, daily <span class="badge b-green">verifiable</span></h4>
+        <p>Every single call is checked against the real closing price the next day and scored. The accuracy track record is recorded — wins <i>and</i> losses — not cherry-picked.</p></div>
+      <div class="t"><h4>Every decision is logged <span class="badge b-green">auditable</span></h4>
+        <p>Each recommendation is stored in Notion with the reasoning behind all six factors, a timestamp, and the sources used. Nothing is ephemeral; you can scroll back through every call it ever made.</p></div>
+      <div class="t"><h4>It learns from its mistakes <span class="badge b-green">improving</span></h4>
+        <p>Errors are classified as fixable (analysis flaws) or unavoidable (market surprises). The fixable ones become rules it explicitly applies the next day — and you can see which lessons it used.</p></div>
+      <div class="t"><h4>No black box <span class="badge b-green">transparent</span></h4>
+        <p>The exact instructions the agent follows are version-controlled in git. Anyone can read precisely how it is told to analyse — and review every change ever made to its method.</p></div>
+      <div class="t"><h4>Multiple independent factors <span class="badge b-green">balanced</span></h4>
+        <p>No single tip or headline drives a verdict. Six separate evidence streams are weighted, and a dedicated Risk check can veto an over-eager call.</p></div>
+      <div class="t"><h4>Human always decides <span class="badge b-amber">by design</span></h4>
+        <p>The agent never places a trade. It produces research; a person reviews it and acts. The blast radius of any single bad call is, by construction, zero.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">08</span>Honest limitations</h2>
+    <p class="lead">Being upfront about what it can't do is part of why the rest can be trusted.</p>
+    <div class="limit">
+      <ul>
+        <li><b>Markets are uncertain.</b> Even a perfectly reasoned call can be wrong — that's why every call is graded and "market-driven misses" are treated as acceptable, not hidden.</li>
+        <li><b>No private or insider data.</b> It uses only public web data and public analyst commentary. It cannot see what the market doesn't.</li>
+        <li><b>Daily cadence, not intraday.</b> It makes one considered call per day — it is not a high-frequency or live-tick system.</li>
+        <li><b>Not financial advice.</b> It is a research and education tool. Always do your own due diligence; a human makes the final decision.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>InvestAI</b> — a self-grading, fully-auditable equity research agent built on Claude (Anthropic).
+       Research &amp; education only; not financial advice.</p>
+    <p class="stamp">Architecture: Home transcript feed → public GitHub → Claude cloud agent → Notion audit database. Model: Claude Sonnet 4.6.</p>
+  </div>
+</footer>
+
+</body>
+</html>
