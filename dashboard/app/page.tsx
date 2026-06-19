@@ -1,6 +1,8 @@
 import { getDashboard, type Rec } from "@/lib/notion";
 import AccuracyChart from "./AccuracyChart";
+import EquityChart from "./EquityChart";
 import TopBar from "./TopBar";
+import backtest from "@/data/backtest.json";
 
 // Always render fresh from Notion.
 export const dynamic = "force-dynamic";
@@ -240,6 +242,50 @@ export default async function Page() {
         <AccuracyChart
           data={d.reviews.map((r) => ({ date: r.date, accuracy: r.accuracy }))}
         />
+      </section>
+
+      {/* Track Record — 1yr backtest */}
+      <section className="card">
+        <div className="card-head">
+          <h2>Track record · {backtest.lookback} backtest</h2>
+          <span className="muted">{backtest.n_calls} calls</span>
+        </div>
+        <div className="bt-grid">
+          <div className="bt-stat">
+            <div className="bt-label">Strategy</div>
+            <div className={`bt-val ${backtest.strategy_return_pct >= 0 ? "pos" : "neg"}`}>
+              {backtest.strategy_return_pct >= 0 ? "+" : ""}
+              {backtest.strategy_return_pct}%
+            </div>
+          </div>
+          <div className="bt-stat">
+            <div className="bt-label">NIFTY 50</div>
+            <div className={`bt-val ${backtest.benchmark_return_pct >= 0 ? "pos" : "neg"}`}>
+              {backtest.benchmark_return_pct >= 0 ? "+" : ""}
+              {backtest.benchmark_return_pct}%
+            </div>
+          </div>
+          <div className="bt-stat">
+            <div className="bt-label">Alpha</div>
+            <div className={`bt-val ${backtest.outperformance_pct >= 0 ? "pos" : "neg"}`}>
+              {backtest.outperformance_pct >= 0 ? "+" : ""}
+              {backtest.outperformance_pct}%
+            </div>
+          </div>
+        </div>
+        <EquityChart data={backtest.equity_curve as any} />
+        <div className="bt-legend">
+          <span><i className="dot strat" /> Strategy</span>
+          <span><i className="dot bench" /> NIFTY 50</span>
+          <span className="muted">
+            acc {backtest.accuracy_pct}% · max DD {backtest.max_drawdown_pct}%
+          </span>
+        </div>
+        <p className="bt-note">
+          Technical-baseline backtest (trend + RSI), graded like the live agent &
+          benchmarked vs NIFTY buy-and-hold. Not a replay of the LLM agent; no
+          costs/slippage. {backtest.period.start} → {backtest.period.end}.
+        </p>
       </section>
 
       {/* Today BUY */}

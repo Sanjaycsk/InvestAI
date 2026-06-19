@@ -1,0 +1,2 @@
+# Heavy base tables stay on the PC, never in git.
+backtest.db
