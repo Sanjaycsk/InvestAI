@@ -63,7 +63,18 @@ export type Rec = {
   outcome: string | null; // Correct | Wrong | Pending
   actualMove: number | null;
   rationale: string | null;
+  why: string | null; // one-sentence reason, derived from the driving factor
 };
+
+// Pick the single most decision-relevant one-liner for "why this call".
+function deriveWhy(pr: any): string | null {
+  const order = ["Technical", "Macro", "Fundamental", "Sentiment", "Valuation", "Risk"];
+  for (const f of order) {
+    const t = pText(pr[f]);
+    if (t && !/^n\/a/i.test(t.trim())) return t.trim();
+  }
+  return null;
+}
 
 export type Review = {
   day: string | null;
@@ -90,6 +101,7 @@ function mapRec(page: any): Rec {
     outcome: pSelect(pr["Outcome"]),
     actualMove: pNumber(pr["Actual Move %"]),
     rationale: pTitle(pr["Entry"]),
+    why: deriveWhy(pr),
   };
 }
 
@@ -123,6 +135,7 @@ export type Dashboard = {
   prevDate: string | null;
   todayBuys: Rec[];
   todaySells: Rec[];
+  todayHolds: Rec[];
   yesterday: Rec[];
   commodities: Rec[]; // latest-day Gold (GOLDBEES) + Silver (SILVERBEES)
   sentiment: MarketSentiment;
@@ -269,6 +282,9 @@ export async function getDashboard(): Promise<Dashboard> {
     const todaySells = todayAll
       .filter((r) => r.verdict === "SELL")
       .sort(byScore);
+    const todayHolds = todayAll
+      .filter((r) => r.verdict === "HOLD")
+      .sort(byScore);
     const yesterday = onDate(prevDate).sort(byScore);
 
     // Gold + Silver pinned in a fixed order (latest day).
@@ -332,6 +348,7 @@ export async function getDashboard(): Promise<Dashboard> {
       prevDate,
       todayBuys,
       todaySells,
+      todayHolds,
       yesterday,
       commodities,
       sentiment,
@@ -352,6 +369,7 @@ export async function getDashboard(): Promise<Dashboard> {
       prevDate: null,
       todayBuys: [],
       todaySells: [],
+      todayHolds: [],
       yesterday: [],
       commodities: [],
       sentiment: neutralSentiment(),

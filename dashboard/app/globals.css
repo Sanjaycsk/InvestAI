@@ -160,6 +160,46 @@ body {
 .stock-row:first-child {
   border-top: none;
 }
+.stock-row.col {
+  display: block;
+}
+.stock-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.why {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.alloc {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+  background: var(--green-dim);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-variant-numeric: tabular-nums;
+}
+.card-head h2.hold-h {
+  color: var(--yellow);
+}
+.yday-sub {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 12px 0 2px;
+}
+.yday-sub:first-child {
+  margin-top: 0;
+}
+.yday-sub.ok {
+  color: var(--green);
+}
+.yday-sub.bad {
+  color: var(--red);
+}
 .stock-main {
   display: flex;
   align-items: center;

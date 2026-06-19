@@ -29,30 +29,93 @@ function signed(n: number | null, suffix = "%"): string {
   return `${s}${n.toFixed(1)}${suffix}`;
 }
 
-function StockRow({ r }: { r: Rec }) {
-  const move =
-    typeof r.actualMove === "number" ? r.actualMove : null;
-  const moveClass =
-    move === null ? "" : move > 0 ? "pos" : move < 0 ? "neg" : "";
+// Conviction-weighted allocation across a basket (by composite score),
+// rounded to whole percents that sum to 100 (largest-remainder method).
+function allocations(recs: Rec[]): number[] {
+  const w = recs.map((r) =>
+    typeof r.compositeScore === "number" && r.compositeScore > 0
+      ? r.compositeScore
+      : 1
+  );
+  const total = w.reduce((a, b) => a + b, 0) || 1;
+  const raw = w.map((x) => (x / total) * 100);
+  const floored = raw.map((x) => Math.floor(x));
+  let left = 100 - floored.reduce((a, b) => a + b, 0);
+  const order = raw
+    .map((x, i) => ({ i, frac: x - Math.floor(x) }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floored];
+  for (let k = 0; k < order.length && left > 0; k++, left--) out[order[k].i]++;
+  return out;
+}
+
+function StockRow({
+  r,
+  alloc,
+  showWhy,
+}: {
+  r: Rec;
+  alloc?: number;
+  showWhy?: boolean;
+}) {
+  const move = typeof r.actualMove === "number" ? r.actualMove : null;
+  const moveClass = move === null ? "" : move > 0 ? "pos" : move < 0 ? "neg" : "";
   return (
-    <li className="stock-row">
-      <div className="stock-main">
-        <span className="ticker">{r.ticker ?? "—"}</span>
-        {r.category && <span className="chip">{r.category}</span>}
+    <li className="stock-row col">
+      <div className="stock-row-top">
+        <div className="stock-main">
+          <span className="ticker">{r.ticker ?? "—"}</span>
+          {r.category && <span className="chip">{r.category}</span>}
+        </div>
+        <div className="stock-meta">
+          {alloc != null && <span className="alloc">{alloc}%</span>}
+          {typeof r.compositeScore === "number" && (
+            <span className="score">{r.compositeScore.toFixed(0)}</span>
+          )}
+          {r.outcome && r.outcome !== "Pending" && (
+            <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
+              {r.outcome === "Correct" ? "✓" : "✗"}
+            </span>
+          )}
+          {move !== null && (
+            <span className={`move ${moveClass}`}>{signed(move)}</span>
+          )}
+        </div>
       </div>
-      <div className="stock-meta">
-        {typeof r.compositeScore === "number" && (
-          <span className="score">{r.compositeScore.toFixed(0)}</span>
-        )}
-        {r.outcome && r.outcome !== "Pending" && (
-          <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
-            {r.outcome === "Correct" ? "✓" : "✗"}
+      {showWhy && r.why && <div className="why">{r.why}</div>}
+    </li>
+  );
+}
+
+function YdayRow({ r }: { r: Rec }) {
+  const move = typeof r.actualMove === "number" ? r.actualMove : null;
+  return (
+    <li className="stock-row col">
+      <div className="stock-row-top">
+        <div className="stock-main">
+          <span className="ticker">{r.ticker ?? "—"}</span>
+          <span
+            className={`verdict ${
+              r.verdict === "BUY" ? "buy" : r.verdict === "SELL" ? "sell" : "hold"
+            }`}
+          >
+            {r.verdict ?? "—"}
           </span>
-        )}
-        {move !== null && (
-          <span className={`move ${moveClass}`}>{signed(move)}</span>
-        )}
+        </div>
+        <div className="stock-meta">
+          {r.outcome && (
+            <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
+              {r.outcome === "Correct" ? "✓" : "✗"}
+            </span>
+          )}
+          {move !== null && (
+            <span className={`move ${move > 0 ? "pos" : move < 0 ? "neg" : ""}`}>
+              {signed(move)}
+            </span>
+          )}
+        </div>
       </div>
+      {r.why && <div className="why">{r.why}</div>}
     </li>
   );
 }
@@ -107,6 +170,26 @@ export default async function Page() {
   const s = d.sentiment;
   // Gauge marker position: map index (-1..1) to 0..100%.
   const gaugePos = Math.round(((s.index + 1) / 2) * 100);
+
+  // Conviction-weighted split across today's BUY basket.
+  const buyAlloc = allocations(d.todayBuys);
+
+  // Yesterday: only the standout hits and the worst misses, by move size.
+  const gradedYday = d.yesterday.filter(
+    (r) =>
+      (r.outcome === "Correct" || r.outcome === "Wrong") &&
+      typeof r.actualMove === "number"
+  );
+  const byMag = (a: Rec, b: Rec) =>
+    Math.abs(b.actualMove as number) - Math.abs(a.actualMove as number);
+  const yBest = gradedYday
+    .filter((r) => r.outcome === "Correct")
+    .sort(byMag)
+    .slice(0, 3);
+  const yWorst = gradedYday
+    .filter((r) => r.outcome === "Wrong")
+    .sort(byMag)
+    .slice(0, 3);
 
   return (
     <main className="container">
@@ -288,16 +371,23 @@ export default async function Page() {
         </p>
       </section>
 
-      {/* Today BUY */}
+      {/* Today BUY — with conviction-weighted allocation + why */}
       <section className="card">
         <div className="card-head">
           <h2 className="buy">🟢 Buy today</h2>
-          <span className="muted">{d.todayBuys.length}</span>
+          <span className="muted">
+            {d.todayBuys.length > 1 ? "% = suggested split" : d.todayBuys.length}
+          </span>
         </div>
         {d.todayBuys.length ? (
           <ul className="stock-list">
             {d.todayBuys.map((r, i) => (
-              <StockRow key={i} r={r} />
+              <StockRow
+                key={i}
+                r={r}
+                alloc={d.todayBuys.length > 1 ? buyAlloc[i] : undefined}
+                showWhy
+              />
             ))}
           </ul>
         ) : (
@@ -305,7 +395,7 @@ export default async function Page() {
         )}
       </section>
 
-      {/* Today SELL */}
+      {/* Today SELL — with why */}
       <section className="card">
         <div className="card-head">
           <h2 className="sell">🔴 Sell / avoid today</h2>
@@ -314,7 +404,7 @@ export default async function Page() {
         {d.todaySells.length ? (
           <ul className="stock-list">
             {d.todaySells.map((r, i) => (
-              <StockRow key={i} r={r} />
+              <StockRow key={i} r={r} showWhy />
             ))}
           </ul>
         ) : (
@@ -322,63 +412,56 @@ export default async function Page() {
         )}
       </section>
 
-      {/* Yesterday */}
+      {/* Today HOLD — already own it? sit tight */}
       <section className="card">
         <div className="card-head">
-          <h2>Yesterday&apos;s calls</h2>
-          <span className="muted">{fmtDate(d.prevDate)}</span>
+          <h2 className="hold-h">🟡 Hold — if you own it, sit tight</h2>
+          <span className="muted">{d.todayHolds.length}</span>
         </div>
-        {d.yesterday.length ? (
+        {d.todayHolds.length ? (
           <ul className="stock-list">
-            {d.yesterday.map((r, i) => (
-              <li className="stock-row" key={i}>
-                <div className="stock-main">
-                  <span className="ticker">{r.ticker ?? "—"}</span>
-                  <span
-                    className={`verdict ${
-                      r.verdict === "BUY"
-                        ? "buy"
-                        : r.verdict === "SELL"
-                        ? "sell"
-                        : "hold"
-                    }`}
-                  >
-                    {r.verdict ?? "—"}
-                  </span>
-                </div>
-                <div className="stock-meta">
-                  {r.outcome && (
-                    <span
-                      className={`outcome ${
-                        r.outcome === "Correct"
-                          ? "ok"
-                          : r.outcome === "Wrong"
-                          ? "bad"
-                          : "pend"
-                      }`}
-                    >
-                      {r.outcome === "Correct"
-                        ? "✓"
-                        : r.outcome === "Wrong"
-                        ? "✗"
-                        : "•"}
-                    </span>
-                  )}
-                  {typeof r.actualMove === "number" && (
-                    <span
-                      className={`move ${
-                        r.actualMove > 0 ? "pos" : r.actualMove < 0 ? "neg" : ""
-                      }`}
-                    >
-                      {signed(r.actualMove)}
-                    </span>
-                  )}
-                </div>
-              </li>
+            {d.todayHolds.map((r, i) => (
+              <StockRow key={i} r={r} showWhy />
             ))}
           </ul>
         ) : (
-          <p className="muted empty">No prior-day data yet.</p>
+          <p className="muted empty">No HOLD calls for the latest day.</p>
+        )}
+      </section>
+
+      {/* Yesterday — only the standout hits and worst misses */}
+      <section className="card">
+        <div className="card-head">
+          <h2>Yesterday&apos;s scorecard</h2>
+          <span className="muted">{fmtDate(d.prevDate)}</span>
+        </div>
+        {gradedYday.length ? (
+          <>
+            <div className="yday-sub ok">✅ Worked well</div>
+            {yBest.length ? (
+              <ul className="stock-list">
+                {yBest.map((r, i) => (
+                  <YdayRow key={i} r={r} />
+                ))}
+              </ul>
+            ) : (
+              <p className="muted empty">No correct calls yesterday.</p>
+            )}
+            <div className="yday-sub bad">❌ Missed</div>
+            {yWorst.length ? (
+              <ul className="stock-list">
+                {yWorst.map((r, i) => (
+                  <YdayRow key={i} r={r} />
+                ))}
+              </ul>
+            ) : (
+              <p className="muted empty">No wrong calls yesterday — clean sweep.</p>
+            )}
+          </>
+        ) : (
+          <p className="muted empty">
+            Yesterday&apos;s calls are still being graded.
+          </p>
         )}
       </section>
 
