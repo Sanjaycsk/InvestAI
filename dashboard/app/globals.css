@@ -532,6 +532,112 @@ body {
   margin-right: 6px;
 }
 
+/* ---- weekend / market-closed banner ---- */
+.banner {
+  background: rgba(245, 196, 81, 0.12);
+  border: 1px solid rgba(245, 196, 81, 0.4);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 11px 13px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+/* ---- plain-English explainer lines ---- */
+.explain {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 10px 0 0;
+}
+.explain.top {
+  margin: 0 0 12px;
+}
+
+/* ---- company name + price on stock rows ---- */
+.coname {
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+.price {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.stock-sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+.dir {
+  font-size: 12px;
+  font-weight: 650;
+}
+.dir.pos {
+  color: var(--green);
+}
+.dir.neg {
+  color: var(--red);
+}
+.conf {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- "Does this work?" ₹100 story ---- */
+.money-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.money-card {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.money-card.win {
+  border-color: rgba(46, 204, 113, 0.45);
+}
+.money-label {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.3;
+  min-height: 28px;
+}
+.money-val {
+  font-size: 26px;
+  font-weight: 800;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.money-val.pos {
+  color: var(--green);
+}
+.money-val.neg {
+  color: var(--red);
+}
+.money-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.money-headline {
+  font-size: 13.5px;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
 /* ---- misc ---- */
 .error-card {
   border-color: var(--red);

@@ -216,29 +216,32 @@ function computeSentiment(
   let label: string;
   let tone: "pos" | "neg" | "neutral";
   if (index >= 0.5) {
-    label = "Strongly Bullish";
+    label = "Feeling greedy";
     tone = "pos";
   } else if (index >= 0.2) {
-    label = "Bullish";
+    label = "Optimistic";
     tone = "pos";
   } else if (index > -0.2) {
-    label = "Neutral";
+    label = "Calm / mixed";
     tone = "neutral";
   } else if (index > -0.5) {
-    label = "Cautious / Bearish";
+    label = "Nervous";
     tone = "neg";
   } else {
-    label = "Risk-off (Crash signal)";
+    label = "Fearful";
     tone = "neg";
   }
 
   const total = counts.buy + counts.hold + counts.sell || 1;
   const upPct = Math.round((dirVals.filter((d) => d > 0).length / total) * 100);
   const scoreTxt =
-    avgScore === null ? "" : ` Average conviction ${avgScore.toFixed(0)}/100.`;
+    avgScore === null
+      ? ""
+      : ` On average it's ${avgScore.toFixed(0)} out of 100 sure of its picks.`;
   const narrative =
-    `${counts.buy} Buy · ${counts.hold} Hold · ${counts.sell} Sell across ${total} names, ` +
-    `${upPct}% pointed up.${scoreTxt}`;
+    `Out of ${total} things it watches, the model wants to BUY ${counts.buy}, ` +
+    `HOLD ${counts.hold} and SELL ${counts.sell} today. ` +
+    `It expects about ${upPct}% of them to go up.${scoreTxt}`;
 
   return {
     label,

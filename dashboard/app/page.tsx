@@ -29,6 +29,58 @@ function signed(n: number | null, suffix = "%"): string {
   return `${s}${n.toFixed(1)}${suffix}`;
 }
 
+// Price the model used when it ran ("Ref Price"), shown so you can decide.
+function fmtPrice(n: number | null): string {
+  if (n === null) return "";
+  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+}
+
+// Plain-English read of the model's expected direction for the day.
+const DIR: Record<string, { arrow: string; text: string; cls: string }> = {
+  Up: { arrow: "▲", text: "expects it to go up", cls: "pos" },
+  Down: { arrow: "▼", text: "expects it to go down", cls: "neg" },
+  Flat: { arrow: "▬", text: "expects little change", cls: "" },
+};
+
+// Swap the most common market jargon in the model's one-liner for words
+// a non-finance reader understands. Conservative, whole-word only.
+const GLOSSARY: [RegExp, string][] = [
+  [/\b200-?DMA\b/gi, "its long-term average price"],
+  [/\b50-?DMA\b/gi, "its average price"],
+  [/\bDMA\b/gi, "average price"],
+  [/\bMACD\b/gi, "the trend signal"],
+  [/\bRSI\b/gi, "momentum"],
+  [/\bP\/E\b/gi, "the price-vs-profit ratio"],
+  [/\bbullish\b/gi, "positive"],
+  [/\bbearish\b/gi, "negative"],
+  [/\boverbought\b/gi, "looking expensive"],
+  [/\boversold\b/gi, "looking cheap"],
+  [/\bbreakout\b/gi, "a sharp move up"],
+  [/\bresistance\b/gi, "a price ceiling"],
+  [/\bsupport\b/gi, "a price floor"],
+];
+function plainify(s: string | null): string | null {
+  if (!s) return s;
+  let out = s;
+  for (const [re, rep] of GLOSSARY) out = out.replace(re, rep);
+  return out;
+}
+
+// Is the Indian market closed today (weekend)? Computed in IST.
+function isWeekendIST(): boolean {
+  const d = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+  }).format(new Date());
+  return d === "Sat" || d === "Sun";
+}
+
+const VERDICT_WORD: Record<string, string> = {
+  BUY: "Buy",
+  SELL: "Sell / avoid",
+  HOLD: "Hold",
+};
+
 // Conviction-weighted allocation across a basket (by composite score),
 // rounded to whole percents that sum to 100 (largest-remainder method).
 function allocations(recs: Rec[]): number[] {
@@ -60,29 +112,46 @@ function StockRow({
 }) {
   const move = typeof r.actualMove === "number" ? r.actualMove : null;
   const moveClass = move === null ? "" : move > 0 ? "pos" : move < 0 ? "neg" : "";
+  const dir = r.expectedDirection ? DIR[r.expectedDirection] : null;
   return (
     <li className="stock-row col">
       <div className="stock-row-top">
         <div className="stock-main">
           <span className="ticker">{r.ticker ?? "—"}</span>
-          {r.category && <span className="chip">{r.category}</span>}
+          {r.company && <span className="coname">{r.company}</span>}
         </div>
         <div className="stock-meta">
-          {alloc != null && <span className="alloc">{alloc}%</span>}
-          {typeof r.compositeScore === "number" && (
-            <span className="score">{r.compositeScore.toFixed(0)}</span>
+          {r.refPrice != null && (
+            <span className="price">{fmtPrice(r.refPrice)}</span>
           )}
-          {r.outcome && r.outcome !== "Pending" && (
-            <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
-              {r.outcome === "Correct" ? "✓" : "✗"}
+          {alloc != null && (
+            <span className="alloc" title="How much of your money to put in this one">
+              {alloc}%
             </span>
-          )}
-          {move !== null && (
-            <span className={`move ${moveClass}`}>{signed(move)}</span>
           )}
         </div>
       </div>
-      {showWhy && r.why && <div className="why">{r.why}</div>}
+      <div className="stock-sub">
+        {dir && (
+          <span className={`dir ${dir.cls}`}>
+            {dir.arrow} {dir.text}
+          </span>
+        )}
+        {typeof r.compositeScore === "number" && (
+          <span className="conf">
+            confidence {r.compositeScore.toFixed(0)}/100
+          </span>
+        )}
+        {r.outcome && r.outcome !== "Pending" && (
+          <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
+            {r.outcome === "Correct" ? "✓ right" : "✗ wrong"}
+          </span>
+        )}
+        {move !== null && (
+          <span className={`move ${moveClass}`}>{signed(move)}</span>
+        )}
+      </div>
+      {showWhy && r.why && <div className="why">{plainify(r.why)}</div>}
     </li>
   );
 }
@@ -99,13 +168,13 @@ function YdayRow({ r }: { r: Rec }) {
               r.verdict === "BUY" ? "buy" : r.verdict === "SELL" ? "sell" : "hold"
             }`}
           >
-            {r.verdict ?? "—"}
+            {r.verdict ? VERDICT_WORD[r.verdict] ?? r.verdict : "—"}
           </span>
         </div>
         <div className="stock-meta">
           {r.outcome && (
             <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
-              {r.outcome === "Correct" ? "✓" : "✗"}
+              {r.outcome === "Correct" ? "✓ right" : "✗ wrong"}
             </span>
           )}
           {move !== null && (
@@ -115,7 +184,7 @@ function YdayRow({ r }: { r: Rec }) {
           )}
         </div>
       </div>
-      {r.why && <div className="why">{r.why}</div>}
+      {r.why && <div className="why">{plainify(r.why)}</div>}
     </li>
   );
 }
@@ -191,29 +260,43 @@ export default async function Page() {
     .sort(byMag)
     .slice(0, 3);
 
+  const weekend = isWeekendIST();
+
   return (
     <main className="container">
-      <TopBar subtitle={`Latest: ${fmtDate(d.latestDate)}`} />
+      <TopBar subtitle={`Showing ${fmtDate(d.latestDate)}`} />
 
-      {/* Market sentiment */}
+      {weekend && (
+        <div className="banner">
+          🛌 The stock market is closed on weekends. You&apos;re looking at{" "}
+          {fmtDate(d.latestDate)}&apos;s reading — fresh picks come back on Monday.
+        </div>
+      )}
+
+      {/* Market mood */}
       <section className={`card sentiment ${s.tone}`}>
         <div className="card-head">
-          <h2>Market sentiment today</h2>
+          <h2>Today&apos;s market mood</h2>
           <span className={`sent-badge ${s.tone}`}>{s.label}</span>
         </div>
         <div className="gauge">
           <div className="gauge-track" />
           <div className="gauge-marker" style={{ left: `${gaugePos}%` }} />
           <div className="gauge-labels">
-            <span>Crash</span>
-            <span>Neutral</span>
-            <span>Euphoric</span>
+            <span>Fearful</span>
+            <span>Calm</span>
+            <span>Greedy</span>
           </div>
         </div>
         <p className="sent-narrative">{s.narrative}</p>
+        <p className="explain">
+          Think of this like a mood meter. Left = people are scared and selling;
+          right = people are excited and buying. The white dot is where today sits.
+        </p>
         {s.agentNote && (
           <p className="sent-note">
-            <span className="sent-note-label">Agent note</span> {s.agentNote}
+            <span className="sent-note-label">In the model&apos;s words</span>{" "}
+            {s.agentNote}
           </p>
         )}
       </section>
@@ -222,7 +305,7 @@ export default async function Page() {
       <section className="card">
         <div className="card-head">
           <h2>Gold &amp; Silver</h2>
-          <span className="muted">commodities</span>
+          <span className="muted">safe-haven options</span>
         </div>
         {d.commodities.length ? (
           <ul className="stock-list">
@@ -231,26 +314,36 @@ export default async function Page() {
                 name: r.ticker ?? "—",
                 icon: "•",
               };
+              const dir = r.expectedDirection ? DIR[r.expectedDirection] : null;
               return (
-                <li className="stock-row commodity-row" key={i}>
-                  <div className="stock-main">
-                    <span className="commodity-icon">{meta.icon}</span>
-                    <span className="ticker">{meta.name}</span>
-                    <span
-                      className={`verdict ${
-                        r.verdict === "BUY"
-                          ? "buy"
-                          : r.verdict === "SELL"
-                          ? "sell"
-                          : "hold"
-                      }`}
-                    >
-                      {r.verdict ?? "—"}
-                    </span>
+                <li className="stock-row col" key={i}>
+                  <div className="stock-row-top">
+                    <div className="stock-main">
+                      <span className="commodity-icon">{meta.icon}</span>
+                      <span className="ticker">{meta.name}</span>
+                      <span
+                        className={`verdict ${
+                          r.verdict === "BUY"
+                            ? "buy"
+                            : r.verdict === "SELL"
+                            ? "sell"
+                            : "hold"
+                        }`}
+                      >
+                        {r.verdict ? VERDICT_WORD[r.verdict] ?? r.verdict : "—"}
+                      </span>
+                    </div>
+                    <div className="stock-meta">
+                      {r.refPrice != null && (
+                        <span className="price">{fmtPrice(r.refPrice)}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="stock-meta">
-                    {typeof r.compositeScore === "number" && (
-                      <span className="score">{r.compositeScore.toFixed(0)}</span>
+                  <div className="stock-sub">
+                    {dir && (
+                      <span className={`dir ${dir.cls}`}>
+                        {dir.arrow} {dir.text}
+                      </span>
                     )}
                     {r.outcome && r.outcome !== "Pending" && (
                       <span
@@ -258,7 +351,7 @@ export default async function Page() {
                           r.outcome === "Correct" ? "ok" : "bad"
                         }`}
                       >
-                        {r.outcome === "Correct" ? "✓" : "✗"}
+                        {r.outcome === "Correct" ? "✓ right" : "✗ wrong"}
                       </span>
                     )}
                     {typeof r.actualMove === "number" && (
@@ -280,37 +373,41 @@ export default async function Page() {
         )}
       </section>
 
-      {/* KPI strip */}
+      {/* KPI strip — plain-English scorecards */}
       <section className="kpi-grid">
         <Kpi
-          label="Strategy P&L (paper)"
+          label="Pretend profit so far"
           value={signed(kpi.strategyPnl)}
           tone={pnlTone as any}
-          hint={`${kpi.gradedCount} graded calls`}
+          hint={`if you'd followed all ${kpi.gradedCount} graded calls`}
         />
         <Kpi
-          label="Accuracy (latest)"
+          label="How often it's right"
           value={kpi.accuracy === null ? "—" : `${kpi.accuracy.toFixed(0)}%`}
           tone="neutral"
           hint={
             kpi.accuracy7d === null
-              ? undefined
-              : `7-day avg ${kpi.accuracy7d.toFixed(0)}%`
+              ? "50% is a coin-toss"
+              : `last 7 days: ${kpi.accuracy7d.toFixed(0)}%`
           }
         />
         <Kpi
-          label="Self-rating"
-          value={kpi.selfRating === null ? "—" : `${kpi.selfRating.toFixed(0)}`}
+          label="Its report card"
+          value={kpi.selfRating === null ? "—" : `${kpi.selfRating.toFixed(0)}/100`}
           tone="neutral"
-          hint={kpi.correctStreak ? `🔥 ${kpi.correctStreak}-day streak` : undefined}
+          hint={
+            kpi.correctStreak
+              ? `🔥 ${kpi.correctStreak} good days in a row`
+              : "the model grades itself"
+          }
         />
         <Kpi
-          label="Best read"
+          label="Most reliable stock"
           value={kpi.bestStock ? kpi.bestStock.ticker : "—"}
           tone="neutral"
           hint={
             kpi.bestStock
-              ? `${kpi.bestStock.hitRate.toFixed(0)}% of ${kpi.bestStock.n}`
+              ? `right ${kpi.bestStock.hitRate.toFixed(0)}% of ${kpi.bestStock.n} times`
               : undefined
           }
         />
@@ -319,64 +416,83 @@ export default async function Page() {
       {/* Accuracy chart */}
       <section className="card">
         <div className="card-head">
-          <h2>Accuracy trend</h2>
-          <span className="muted">{d.reviews.length} days</span>
+          <h2>How often it&apos;s been right</h2>
+          <span className="muted">last {d.reviews.length} days</span>
         </div>
         <AccuracyChart
           data={d.reviews.map((r) => ({ date: r.date, accuracy: r.accuracy }))}
         />
+        <p className="explain">
+          Each point is one day&apos;s score. Higher is better. 50% is the same as
+          flipping a coin — above that line means the model is doing better than luck.
+        </p>
       </section>
 
-      {/* Track Record — 1yr backtest */}
+      {/* Track Record — 1yr backtest, told as a ₹100 story */}
       <section className="card">
         <div className="card-head">
-          <h2>Track record · {backtest.lookback} backtest</h2>
-          <span className="muted">{backtest.n_calls} calls</span>
+          <h2>Does this actually work?</h2>
+          <span className="muted">1-year test</span>
         </div>
-        <div className="bt-grid">
-          <div className="bt-stat">
-            <div className="bt-label">Strategy</div>
-            <div className={`bt-val ${backtest.strategy_return_pct >= 0 ? "pos" : "neg"}`}>
-              {backtest.strategy_return_pct >= 0 ? "+" : ""}
-              {backtest.strategy_return_pct}%
+        <p className="explain top">
+          Imagine you put <strong>₹100</strong> in one year ago and followed this
+          plan every day. Here&apos;s where it would be today versus just leaving
+          that ₹100 in the overall market.
+        </p>
+        <div className="money-grid">
+          <div className="money-card win">
+            <div className="money-label">Following this model</div>
+            <div className="money-val pos">
+              ₹{(100 * (1 + backtest.strategy_return_pct / 100)).toFixed(0)}
+            </div>
+            <div className="money-sub">
+              {backtest.strategy_return_pct >= 0 ? "grew" : "shrank"} by{" "}
+              {Math.abs(backtest.strategy_return_pct)}%
             </div>
           </div>
-          <div className="bt-stat">
-            <div className="bt-label">NIFTY 50</div>
-            <div className={`bt-val ${backtest.benchmark_return_pct >= 0 ? "pos" : "neg"}`}>
-              {backtest.benchmark_return_pct >= 0 ? "+" : ""}
-              {backtest.benchmark_return_pct}%
+          <div className="money-card">
+            <div className="money-label">The whole market (NIFTY 50)</div>
+            <div
+              className={`money-val ${
+                backtest.benchmark_return_pct >= 0 ? "pos" : "neg"
+              }`}
+            >
+              ₹{(100 * (1 + backtest.benchmark_return_pct / 100)).toFixed(0)}
             </div>
-          </div>
-          <div className="bt-stat">
-            <div className="bt-label">Alpha</div>
-            <div className={`bt-val ${backtest.outperformance_pct >= 0 ? "pos" : "neg"}`}>
-              {backtest.outperformance_pct >= 0 ? "+" : ""}
-              {backtest.outperformance_pct}%
+            <div className="money-sub">
+              {backtest.benchmark_return_pct >= 0 ? "grew" : "shrank"} by{" "}
+              {Math.abs(backtest.benchmark_return_pct)}%
             </div>
           </div>
         </div>
+        <p className="money-headline">
+          👉 It beat the market by about{" "}
+          <strong>{Math.round(backtest.outperformance_pct)}%</strong> over the year.
+        </p>
         <EquityChart data={backtest.equity_curve as any} />
         <div className="bt-legend">
-          <span><i className="dot strat" /> Strategy</span>
-          <span><i className="dot bench" /> NIFTY 50</span>
-          <span className="muted">
-            acc {backtest.accuracy_pct}% · max DD {backtest.max_drawdown_pct}%
+          <span>
+            <i className="dot strat" /> This model
+          </span>
+          <span>
+            <i className="dot bench" /> Whole market
           </span>
         </div>
         <p className="bt-note">
-          Technical-baseline backtest (trend + RSI), graded like the live agent &
-          benchmarked vs NIFTY buy-and-hold. Not a replay of the LLM agent; no
-          costs/slippage. {backtest.period.start} → {backtest.period.end}.
+          Reality check: this is a 1-year test of a simpler rule-based version, not
+          the full AI you see above — so treat it as encouraging, not a promise. The
+          worst dip along the way was {Math.abs(backtest.max_drawdown_pct)}% (your
+          ₹100 briefly fell that much before recovering). Past results don&apos;t
+          guarantee the future.
         </p>
       </section>
 
       {/* Today BUY — with conviction-weighted allocation + why */}
       <section className="card">
         <div className="card-head">
-          <h2 className="buy">🟢 Buy today</h2>
+          <h2 className="buy">🟢 Worth buying today</h2>
           <span className="muted">
-            {d.todayBuys.length > 1 ? "% = suggested split" : d.todayBuys.length}
+            {d.todayBuys.length > 1 ? "% = how to split your money" : d.todayBuys.length}
           </span>
         </div>
         {d.todayBuys.length ? (
@@ -398,7 +514,7 @@ export default async function Page() {
       {/* Today SELL — with why */}
       <section className="card">
         <div className="card-head">
-          <h2 className="sell">🔴 Sell / avoid today</h2>
+          <h2 className="sell">🔴 Avoid or sell today</h2>
           <span className="muted">{d.todaySells.length}</span>
         </div>
         {d.todaySells.length ? (
@@ -415,7 +531,7 @@ export default async function Page() {
       {/* Today HOLD — already own it? sit tight */}
       <section className="card">
         <div className="card-head">
-          <h2 className="hold-h">🟡 Hold — if you own it, sit tight</h2>
+          <h2 className="hold-h">🟡 Already own it? Just hold</h2>
           <span className="muted">{d.todayHolds.length}</span>
         </div>
         {d.todayHolds.length ? (
