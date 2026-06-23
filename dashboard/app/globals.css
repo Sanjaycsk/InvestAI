@@ -1,16 +1,22 @@
 :root {
-  --bg: #0b0e14;
-  --card: #141926;
-  --card-2: #1b2233;
-  --line: #232c40;
-  --text: #e6ebf5;
-  --muted: #8a94ad;
-  --green: #2ecc71;
-  --green-dim: rgba(46, 204, 113, 0.14);
-  --red: #ff5d6c;
-  --red-dim: rgba(255, 93, 108, 0.14);
-  --yellow: #f5c451;
-  --accent: #5b9dff;
+  --bg: #0a0c11;
+  --bg-2: #0d1018;
+  --card: #131825;
+  --card-2: #1a2030;
+  --line: #273043;
+  --line-soft: rgba(255, 255, 255, 0.055);
+  --text: #eef1f8;
+  --muted: #99a4be;
+  --green: #34d399;
+  --green-dim: rgba(52, 211, 153, 0.14);
+  --red: #fb7185;
+  --red-dim: rgba(251, 113, 133, 0.14);
+  --yellow: #fbbf24;
+  --accent: #6aa8ff;
+  --accent-2: #9b7bff;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -18px rgba(0, 0, 0, 0.75);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --radius: 18px;
 }
 
 * {
@@ -22,11 +28,41 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+html {
+  background: var(--bg);
+}
+body {
+  font-size: 15px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  min-height: 100dvh;
+  background: radial-gradient(
+      1000px 440px at 50% -160px,
+      rgba(106, 168, 255, 0.1),
+      transparent 70%
+    ),
+    var(--bg);
+  background-attachment: fixed;
+}
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 .container {
@@ -44,14 +80,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 2px 12px;
-  background: linear-gradient(var(--bg) 70%, rgba(11, 14, 20, 0));
-  backdrop-filter: blur(4px);
+  padding: 16px 2px 12px;
+  margin-bottom: 2px;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border-bottom: 1px solid var(--line-soft);
 }
 .topbar-title {
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
 }
 .topbar-sub {
   font-size: 12px;
@@ -64,15 +103,22 @@ body {
 }
 .ghost {
   background: var(--card);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-soft);
   color: var(--muted);
-  border-radius: 10px;
-  padding: 8px 12px;
+  border-radius: 11px;
+  padding: 8px 13px;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+.ghost:hover {
+  color: var(--text);
+  border-color: var(--line);
 }
 .ghost:active {
   background: var(--card-2);
+  transform: translateY(1px);
 }
 
 /* ---- KPI grid ---- */
@@ -84,20 +130,23 @@ body {
 }
 .kpi {
   background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 15px;
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
 }
 .kpi-label {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  font-weight: 650;
 }
 .kpi-value {
-  font-size: 24px;
-  font-weight: 700;
-  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  margin-top: 5px;
 }
 .kpi-value.pos {
   color: var(--green);
@@ -114,21 +163,23 @@ body {
 /* ---- cards ---- */
 .card {
   background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 16px;
   margin-bottom: 14px;
+  box-shadow: var(--shadow);
 }
 .card-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .card-head h2 {
-  font-size: 15px;
+  font-size: 16px;
   margin: 0;
-  font-weight: 650;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .card-head h2.buy {
   color: var(--green);
@@ -207,28 +258,40 @@ body {
   color: var(--red);
   border-color: color-mix(in srgb, var(--red) 40%, transparent);
 }
-/* ---- tab nav ---- */
+/* ---- tab nav (segmented control) ---- */
 .tabnav {
   display: flex;
-  gap: 8px;
-  margin: 4px 0 14px;
+  gap: 4px;
+  margin: 8px 0 16px;
+  padding: 4px;
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
 }
 .tabnav a {
   flex: 1;
   text-align: center;
   padding: 9px 10px;
   border-radius: 10px;
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: transparent;
   color: var(--muted);
   font-weight: 650;
   font-size: 13px;
   text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.tabnav a:hover {
+  color: var(--text);
 }
 .tabnav a.active {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 80%, #000)
+  );
+  box-shadow: 0 6px 16px -8px var(--accent);
 }
 /* ---- coffee-shop panel ---- */
 .coffee-scroll {
@@ -427,9 +490,9 @@ body {
   font-size: 10.5px;
   color: var(--muted);
   background: var(--card-2);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 2px 7px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
 }
 .stock-meta {
   display: flex;
@@ -468,8 +531,9 @@ body {
 .verdict {
   font-size: 11px;
   font-weight: 700;
-  border-radius: 6px;
-  padding: 2px 7px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  letter-spacing: 0.2px;
 }
 .verdict.buy {
   color: var(--green);
@@ -708,14 +772,15 @@ body {
 }
 .gauge-marker {
   position: absolute;
-  top: -3px;
-  width: 14px;
-  height: 14px;
+  top: -4px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #fff;
   border: 2px solid var(--bg);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.5);
   transform: translateX(-50%);
+  transition: left 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .gauge-labels {
   display: flex;
@@ -864,4 +929,30 @@ body {
   color: var(--muted);
   font-size: 11px;
   padding: 6px 0 2px;
+}
+
+/* ---- modern polish ---- */
+.stance {
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+.kpi-value,
+.money-val,
+.bt-val,
+.price,
+.move,
+.score {
+  font-variant-numeric: tabular-nums;
+}
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+.coffee-takes > summary::before {
+  content: "▸ ";
+  color: var(--muted);
+}
+.coffee-takes[open] > summary::before {
+  content: "▾ ";
 }
