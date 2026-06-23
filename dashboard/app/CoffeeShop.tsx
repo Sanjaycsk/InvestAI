@@ -2,12 +2,12 @@ import { type CoffeeOpinion } from "@/lib/notion";
 
 // The six coffee-shop characters, in a fixed display order.
 const PERSONAS: { key: string; emoji: string; tag: string }[] = [
-  { key: "Vihaan", emoji: "🧓", tag: "the Veteran" },
-  { key: "Aarav", emoji: "⚡", tag: "the Hotshot" },
-  { key: "Rohan", emoji: "👀", tag: "the Window-Shopper" },
-  { key: "Meera", emoji: "💼", tag: "the Delegator" },
-  { key: "Neel", emoji: "🪙", tag: "the Shoestring" },
-  { key: "Diya", emoji: "🎲", tag: "the Experimenter" },
+  { key: "Vihaan", emoji: "🧓", tag: "Veteran — buys quality, holds for years" },
+  { key: "Aarav", emoji: "⚡", tag: "Hotshot — rides short-term momentum" },
+  { key: "Rohan", emoji: "👀", tag: "Watcher — waits for a dip, rarely buys" },
+  { key: "Meera", emoji: "💼", tag: "Delegator — safe, set-and-forget SIPs" },
+  { key: "Neel", emoji: "🪙", tag: "Small budget — sticks to cheap ETFs" },
+  { key: "Diya", emoji: "🎲", tag: "Experimenter — small risky punts" },
 ];
 const STANCE_CLS: Record<string, string> = {
   Buy: "st-buy",

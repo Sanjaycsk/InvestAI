@@ -19,9 +19,21 @@ function fmtDate(iso: string | null): string {
 
 // The three points in the day the table weighs in.
 const RUNS: { key: string; title: string; subtitle: string }[] = [
-  { key: "Pre-market", title: "🌅 Pre-market", subtitle: "on the fresh picks · 9:30" },
-  { key: "Confirm", title: "📈 After the open", subtitle: "how they opened · 10:30" },
-  { key: "De-risk", title: "🛡️ Before the close", subtitle: "hold or bail · 15:20" },
+  {
+    key: "Pre-market",
+    title: "🌅 Pre-market",
+    subtitle: "before the market opens · 9:30 AM",
+  },
+  {
+    key: "Confirm",
+    title: "📈 After the open",
+    subtitle: "about an hour into trading · 10:30 AM",
+  },
+  {
+    key: "De-risk",
+    title: "🛡️ Before the close",
+    subtitle: "last call before the 3:30 close · 3:20 PM",
+  },
 ];
 
 export default async function CoffeePage() {

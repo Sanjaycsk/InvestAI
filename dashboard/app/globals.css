@@ -262,6 +262,12 @@ body {
   text-align: left;
   z-index: 1;
 }
+.coffee-matrix .cm-friend {
+  white-space: normal;
+  min-width: 140px;
+  max-width: 172px;
+  vertical-align: top;
+}
 .coffee-matrix .cm-corner {
   border-bottom: 1px solid var(--line);
   color: var(--muted);
