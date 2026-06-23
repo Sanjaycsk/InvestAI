@@ -74,7 +74,7 @@ Cooperating environments, each chosen for where its data is actually reachable:
 YouTube ─▶ Home PC (residential) ─▶ Public GitHub ─┐
                                                     ▼
   Friend's notes (Notion) ─┐         CLAUDE CLOUD ROUTINES  ⇄  Notion (audit memory)
-                           ├──────▶   Run 1 · Run 2 · Run 3        │  + Coffee Shop panels
+                           ├──────▶   Run 1 · Run 2 · Run 3        │  (each hosts a coffee debate)
   Live Web ────────────────┘        (anticipate·confirm·de-risk)   ▼
                                                               Dashboard (PWA) ─▶ You (decide)
 ```
@@ -82,8 +82,9 @@ YouTube ─▶ Home PC (residential) ─▶ Public GitHub ─┐
 - **Home PC** — fetches transcripts from trusted YouTube channels (YouTube only loads
   from a residential IP). Companion repo: **[youtube-stock-reader](https://github.com/Sanjaycsk/youtube-stock-reader)**.
 - **Public GitHub** — holds the transcript data feed + the version-controlled agent prompts.
-- **Anthropic cloud** — six scheduled Claude routines (3 main runs + 3 coffee-shop panels)
-  read the data, research the live web, analyze, and grade. Model: `Claude Sonnet 4.6`.
+- **Anthropic cloud** — three scheduled Claude routines (Run 1 / 2 / 3); each one also
+  hosts its coffee-shop debate as a final step. They research the live web, analyze, and
+  grade. Model: `Claude Sonnet 4.6`.
 - **Notion** — the permanent, human-readable audit trail (`Recommendations`, `Daily Review`,
   `Coffee Shop`, plus a friend-input `Inputs` table).
 - **Dashboard** — a mobile PWA (Vercel) that reads live from Notion. See [`dashboard/`](dashboard/).

@@ -5,7 +5,7 @@ themselves are the running copies (saved server-side); this file is the reviewab
 source. Edit here, then mirror changes into a routine via the `/schedule`
 RemoteTrigger `update` action.
 
-## Where it runs — six cloud routines (Claude plan, no API key, model `claude-sonnet-4-6`)
+## Where it runs — three cloud routines (Claude plan, no API key, model `claude-sonnet-4-6`)
 
 All crons are **UTC**; the local time is **IST** (UTC+5:30). All run **weekdays only**
 (`* * 1-5`) and each begins with a **trading-day gate** that also skips NSE holidays
@@ -13,12 +13,14 @@ All crons are **UTC**; the local time is **IST** (UTC+5:30). All run **weekdays 
 
 | Routine | id | cron (UTC) | IST | Role |
 | --- | --- | --- | --- | --- |
-| **Run 1 · Pre-market** | `trig_01SYmjbgEdjKHhQpFozrfJjZ` | `0 3 * * 1-5` | 08:30 | grade yesterday (+ mgmt alpha) → learn → analyze 24 → log verdict (frozen) |
-| **Run 2 · Confirm** | `trig_01JJVmRfagEaGxnLpUNgNa8f` | `30 4 * * 1-5` | 10:00 | light delta-check vs morning thesis; reads friend Inputs; annotates `Run2*` |
-| **Run 3 · De-risk** | `trig_018n6MbVkChwJmf13aDWqm2W` | `30 9 * * 1-5` | 15:00 | exit/trim only on a material break; annotates `Run3*` + `Exit Price` |
-| **Coffee · Pre-market** | `trig_01Ak5QL1HPRVzZ5coL8pzY6n` | `0 4 * * 1-5` | 09:30 | 6 personas debate the BUY shortlist |
-| **Coffee · Confirm** | `trig_0129grinVncDPyHXA14JXTGQ` | `0 5 * * 1-5` | 10:30 | same personas revisit after the open |
-| **Coffee · De-risk** | `trig_0146ujGThP7hYDdTu9FAeqzv` | `50 9 * * 1-5` | 15:20 | same personas, end-of-day hold/bail |
+| **Run 1 · Pre-market** | `trig_01SYmjbgEdjKHhQpFozrfJjZ` | `0 3 * * 1-5` | 08:30 | grade yesterday (+ mgmt alpha) → learn → analyze 24 → log verdict (frozen) → **STEP 4 coffee debate** |
+| **Run 2 · Confirm** | `trig_01JJVmRfagEaGxnLpUNgNa8f` | `30 4 * * 1-5` | 10:00 | delta-check vs morning thesis; reads friend Inputs; annotates `Run2*` → **coffee debate** |
+| **Run 3 · De-risk** | `trig_018n6MbVkChwJmf13aDWqm2W` | `30 9 * * 1-5` | 15:00 | exit/trim only on a material break; annotates `Run3*` + `Exit Price` → **coffee debate** |
+
+The six-persona coffee-shop debate is folded into each run as its final step (STEP 4) —
+so there are **three** triggers, not six. The earlier standalone coffee routines
+(`trig_01Ak5QL1HPRVzZ5coL8pzY6n`, `trig_0129grinVncDPyHXA14JXTGQ`, `trig_0146ujGThP7hYDdTu9FAeqzv`)
+are now **disabled** (delete them at https://claude.ai/code/routines).
 
 Each routine's `session_context.allowed_tools` **must** keep `mcp__Notion` (the Notion
 connector is attached to all six). `job_config` updates replace the whole object, so
@@ -63,6 +65,7 @@ Every run skips weekends and these dates (prints "Market holiday — skipped" an
 **Coffee Shop (Run 1 panel)** — `fee73e14-f1c4-48b7-a285-c319ccb781b7`
 - Note(title), Date, Ticker, **Persona**(Vihaan/Aarav/Rohan/Meera/Neel/Diya),
   **Stance**(Buy/SIP/Hold/Wait/Avoid/Punt), **Horizon**(Long/Short/Mixed), Take,
+  **Debate**(per-ticker transcript, written on that ticker's Vihaan row),
   **Run**(Pre-market/Confirm/De-risk). One row per persona × shortlisted ticker × run.
 
 ## Scoring framework
@@ -97,13 +100,16 @@ Watchlist (60-70) → HOLD · Hold (45-60) → HOLD · Avoid/Sell (<45) → SELL
 **Run 1 (08:30)** — STEP 0 trading-day gate · STEP 1 grade yesterday's Pending rows
 (+ management alpha) → Daily Review row · STEP 1.5 learn from recent reviews · STEP 2
 per-type 6-factor score → category → verdict · STEP 3 log one Recommendations row per
-instrument (overwrite-safe; verdict frozen).
+instrument (overwrite-safe; verdict frozen) · STEP 4 coffee debate (Pre-market).
 **Run 2 (10:00)** — gate · load today's verdicts · read friend Inputs (today, our 24
-only) · pull intraday prices · write `Run2 Status/Action/Note/Price` (mostly "Intact / None").
+only) · pull intraday prices · write `Run2 Status/Action/Note/Price` (mostly "Intact / None")
+· STEP 4 coffee debate (Confirm).
 **Run 3 (15:00)** — gate · load verdicts + Run 2 reads · exit/trim only on a material
-thesis break · write `Run3 Status/Action/Note/Price` + `Exit Price`.
-**Coffee panels (09:30 / 10:30 / 15:20)** — gate · take the same top-5 BUY shortlist ·
-6 personas debate and each records a stance into Coffee Shop, tagged with the run.
+thesis break · write `Run3 Status/Action/Note/Price` + `Exit Price` · STEP 4 coffee debate (De-risk).
+**STEP 4 coffee debate (inside every run)** — take the day's top-5 BUY shortlist; the 6
+characters argue back-and-forth (rebutting each other by name) and each records a stance
+into Coffee Shop tagged with the run; the per-ticker transcript goes in the `Debate`
+column (on that ticker's Vihaan row). Perspective only — never changes the verdict.
 
 ## Logging is overwrite-safe
 Re-running a given day **updates** that day's rows (Recommendations keyed by Date+Ticker;
@@ -117,6 +123,6 @@ Coffee Shop keyed by Date+Ticker+Persona+Run) instead of duplicating.
 - **Deferred:** Telegram end-of-run delivery.
 
 ## The exact routine prompts
-Run 1's verbatim prompt is mirrored in [`agent/routine_prompt.md`](agent/routine_prompt.md);
-the sibling routines (Runs 2/3 and the three coffee panels) are summarised there and live
-server-side under the IDs above.
+Run 1's verbatim prompt is mirrored in [`agent/routine_prompt.md`](agent/routine_prompt.md)
+(including its STEP 4 coffee debate); Runs 2 and 3 are summarised there and live server-side
+under the IDs above.

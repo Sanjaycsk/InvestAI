@@ -1,10 +1,11 @@
 # Cloud routine prompts (verbatim)
 
 Exact `message.content` for the **Run 1 · Pre-market** routine
-(`trig_01SYmjbgEdjKHhQpFozrfJjZ`) below. Keep in sync when the routine changes.
-The five sibling routines (Run 2, Run 3, and the three coffee-shop panels) are
-listed at the bottom and live server-side under their own IDs — see
-[`../AGENT.md`](../AGENT.md) for the full table, schema, and grading split.
+(`trig_01SYmjbgEdjKHhQpFozrfJjZ`) below, including its STEP 4 coffee debate. Keep in
+sync when the routine changes. The two sibling routines (Run 2, Run 3) — each with its
+own folded STEP 4 coffee debate — are summarised at the bottom and live server-side
+under their own IDs; see [`../AGENT.md`](../AGENT.md) for the full table, schema, and
+grading split.
 
 > Notes: yfinance/Yahoo is BLOCKED in the Anthropic cloud sandbox → web prices.
 > 24-instrument universe. Weekdays only + NSE-holiday gate. The morning verdict is
@@ -60,11 +61,15 @@ Composite 0-100 -> Category: Strong Buy >80, Buy on Dip 70-80, Watchlist 60-70, 
 For each of the 24: if a Recommendations row ALREADY EXISTS for (today's Date, that Ticker), UPDATE it (overwrite); otherwise CREATE it. Fields: Entry = '<today> <TICKER>', Date = today, Ticker, Company (full name; 'Nifty 200 ETF' / 'Gold ETF' / 'Silver ETF' for the ETFs), Verdict, Category, Composite Score, Expected Direction, Ref Price = latest close, one-line note per factor used ('N/A (commodity)' / 'N/A (index)' where a factor does not apply), Sources, Outcome = 'Pending'.
 FREEZE RULE: the Verdict, Expected Direction and Ref Price you set now are the FROZEN 'verdict of record' for today. The 10:00 (confirm) and 15:00 (de-risk) intraday runs READ them but NEVER change them — they only write the Run2*/Run3* fields. When you UPDATE an existing row here, set ONLY the fields listed above; do NOT write or clear any Run2/Run3/Exit Price/Mgmt Saved column.
 
+=== STEP 4 — COFFEE-SHOP DEBATE (Pre-market; perspective only, NEVER changes the verdict) ===
+Six recurring investor characters DEBATE today's BUY shortlist — a REAL back-and-forth where they argue, rebut and answer EACH OTHER BY NAME, not six separate monologues. SHORTLIST = the BUY rows you just logged, sorted by Composite Score desc, top 5 (if there are no BUYs, the 3 highest-Composite-Score rows of any verdict). THE 6 CHARACTERS: Vihaan ('the Veteran' — long-term, quality at a fair valuation), Aarav ('the Hotshot' — short-term momentum), Rohan ('the Window-Shopper' — risk-averse, mostly WAIT, buys only a clear pullback), Meera ('the Delegator' — safe SIPs, defers to Vihaan), Neel ('the Shoestring' — small budget, cheap ETFs/SIP), Diya ('the Experimenter' — risk-on PUNTs). For EACH shortlist ticker run a SHORT debate of 5-8 lines (>=2 lines answering another character by name), then write to the Coffee Shop database (fee73e14-f1c4-48b7-a285-c319ccb781b7): (a) ONE row per character with Run='Pre-market', Note='<today> <TICKER> - <Persona> - Pre-market', Date, Ticker, Persona, Stance (Buy/SIP/Hold/Wait/Avoid/Punt where they LANDED), Horizon, Take (one sentence in voice); (b) on that ticker's Vihaan row ONLY, set Debate = the full transcript ('Name: line' per newline). Overwrite-safe on Date+Ticker+Persona+Run. Stances must genuinely differ.
+
 === OUTPUT (final message) ===
 - First line: yesterday's grade ('Yesterday: X/Y correct = Z%, self-rating N') or 'First run'.
 - Second line: 'Applied lessons: ...' (from Step 1.5).
 - If any de-risk exits were graded: a line 'De-risk P&L: Mgmt Alpha = <sum> across <Exits Count> exits'.
 - Then all 24 grouped (Equities, then GROWWN200, then Gold/Silver): TICKER — name — VERDICT (Category, score) — one-line reason.
+- A 'Coffee-shop debate (Pre-market): <N> rows across <shortlist size> names' line.
 - State the YouTube transcript date range used (or 'No YouTube data').
 Telegram delivery is intentionally skipped for now.
 
@@ -76,13 +81,15 @@ Robustness: never use yfinance/Yahoo; if a source fails, try another and continu
 
 - **Run 2 · Confirm** — `trig_01JJVmRfagEaGxnLpUNgNa8f`, `30 4 * * 1-5` (10:00 IST).
   Loads today's frozen verdicts, reads the friend `Inputs` table (today, our 24 only),
-  pulls intraday prices, and writes `Run2 Status/Action/Note/Price` — mostly "Intact / None".
-  Never changes the verdict.
+  pulls intraday prices, writes `Run2 Status/Action/Note/Price` — mostly "Intact / None" —
+  then runs its STEP 4 coffee debate (Run='Confirm'), revisiting the shortlist after the
+  open. Never changes the verdict.
 - **Run 3 · De-risk** — `trig_018n6MbVkChwJmf13aDWqm2W`, `30 9 * * 1-5` (15:00 IST).
   Exits/trims only a position whose thesis has materially broken; writes
-  `Run3 Status/Action/Note/Price` + `Exit Price`. Graded into Mgmt Alpha next morning.
-- **Coffee Shop · Pre-market / Confirm / De-risk** — `trig_01Ak5QL1HPRVzZ5coL8pzY6n`
-  (`0 4`), `trig_0129grinVncDPyHXA14JXTGQ` (`0 5`), `trig_0146ujGThP7hYDdTu9FAeqzv`
-  (`50 9`), all `* * 1-5`. Six investor personas (Vihaan/Aarav/Rohan/Meera/Neel/Diya)
-  debate the day's top-5 BUY shortlist and each records a stance into the Coffee Shop
-  database, tagged with the run. Perspective only — never changes the verdict.
+  `Run3 Status/Action/Note/Price` + `Exit Price` (graded into Mgmt Alpha next morning),
+  then runs its STEP 4 coffee debate (Run='De-risk'), the end-of-day hold/bail call.
+
+The coffee debate is the same six personas (Vihaan/Aarav/Rohan/Meera/Neel/Diya) at each
+run; all three write to the Coffee Shop database tagged by `Run`. The earlier standalone
+coffee routines (`trig_01Ak5QL1HPRVzZ5coL8pzY6n`, `trig_0129grinVncDPyHXA14JXTGQ`,
+`trig_0146ujGThP7hYDdTu9FAeqzv`) are **disabled** (delete at https://claude.ai/code/routines).
