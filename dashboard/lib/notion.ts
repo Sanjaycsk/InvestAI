@@ -64,6 +64,17 @@ export type Rec = {
   actualMove: number | null;
   rationale: string | null;
   why: string | null; // one-sentence reason, derived from the driving factor
+  // ---- intraday runs (Run 2 confirm @10:00, Run 3 de-risk @15:00) ----
+  run2Status: string | null; // Intact | Weakening | Broken
+  run2Action: string | null; // None | Watch
+  run2Note: string | null;
+  run2Price: number | null;
+  run3Status: string | null; // Intact | Weakening | Broken
+  run3Action: string | null; // None | Trim | Exit
+  run3Note: string | null;
+  run3Price: number | null;
+  exitPrice: number | null;
+  mgmtSaved: number | null; // Exit Price − actual close (graded next morning)
 };
 
 // Pick the single most decision-relevant one-liner for "why this call".
@@ -85,6 +96,8 @@ export type Review = {
   selfRating: number | null;
   summary: string | null;
   lessons: string | null;
+  mgmtAlpha: number | null; // ₹ saved/lost by Run 3 de-risk exits that day
+  exitsCount: number | null; // how many Run 3 exits/trims fired
 };
 
 function mapRec(page: any): Rec {
@@ -102,6 +115,16 @@ function mapRec(page: any): Rec {
     actualMove: pNumber(pr["Actual Move %"]),
     rationale: pTitle(pr["Entry"]),
     why: deriveWhy(pr),
+    run2Status: pSelect(pr["Run2 Status"]),
+    run2Action: pSelect(pr["Run2 Action"]),
+    run2Note: pText(pr["Run2 Note"]),
+    run2Price: pNumber(pr["Run2 Price"]),
+    run3Status: pSelect(pr["Run3 Status"]),
+    run3Action: pSelect(pr["Run3 Action"]),
+    run3Note: pText(pr["Run3 Note"]),
+    run3Price: pNumber(pr["Run3 Price"]),
+    exitPrice: pNumber(pr["Exit Price"]),
+    mgmtSaved: pNumber(pr["Mgmt Saved"]),
   };
 }
 
@@ -116,6 +139,8 @@ function mapReview(page: any): Review {
     selfRating: pNumber(pr["Self Rating"]),
     summary: pText(pr["Summary"]),
     lessons: pText(pr["Lessons"]),
+    mgmtAlpha: pNumber(pr["Mgmt Alpha"]),
+    exitsCount: pNumber(pr["Exits Count"]),
   };
 }
 
@@ -138,6 +163,7 @@ export type Dashboard = {
   todayHolds: Rec[];
   yesterday: Rec[];
   commodities: Rec[]; // latest-day Gold (GOLDBEES) + Silver (SILVERBEES)
+  todayDerisk: Rec[]; // latest-day Run 3 de-risk actions (Exit / Trim)
   sentiment: MarketSentiment;
   reviews: Review[]; // ascending by date, for the chart
   kpi: {
@@ -145,6 +171,7 @@ export type Dashboard = {
     accuracy7d: number | null; // mean of last 7 reviews
     selfRating: number | null;
     strategyPnl: number | null; // paper: +move on BUY, -move on SELL, graded only
+    mgmtAlpha: number | null; // cumulative % saved by Run 3 de-risk exits (separate from forecast)
     bestStock: { ticker: string; hitRate: number; n: number } | null;
     correctStreak: number; // consecutive latest reviews with accuracy >= 50
     gradedCount: number;
@@ -296,6 +323,11 @@ export async function getDashboard(): Promise<Dashboard> {
       (t) => todayAll.find((r) => r.ticker === t)
     ).filter((r): r is Rec => !!r);
 
+    // Run 3 de-risk actions taken on the latest day (Exit / Trim).
+    const todayDerisk = todayAll.filter(
+      (r) => r.run3Action === "Exit" || r.run3Action === "Trim"
+    );
+
     // ---- KPIs ----
     const latestReview = reviews[reviews.length - 1] ?? null;
     const sentiment = computeSentiment(todayAll, latestReview);
@@ -319,6 +351,23 @@ export async function getDashboard(): Promise<Dashboard> {
         return sum; // HOLD contributes nothing
       }, 0);
     }
+
+    // Management alpha: cumulative % the Run 3 de-risk exits saved (or cost),
+    // tracked separately from forecast accuracy. Mgmt Saved is in price units,
+    // normalised to % of the exit price so it sums comparably across stocks.
+    const exited = recs.filter(
+      (r) =>
+        (r.run3Action === "Exit" || r.run3Action === "Trim") &&
+        typeof r.mgmtSaved === "number" &&
+        typeof r.exitPrice === "number" &&
+        (r.exitPrice as number) > 0
+    );
+    const mgmtAlpha = exited.length
+      ? exited.reduce(
+          (sum, r) => sum + ((r.mgmtSaved as number) / (r.exitPrice as number)) * 100,
+          0
+        )
+      : null;
 
     // Best stock by hit rate (min 2 graded calls).
     const perTicker = new Map<string, { correct: number; n: number }>();
@@ -354,6 +403,7 @@ export async function getDashboard(): Promise<Dashboard> {
       todayHolds,
       yesterday,
       commodities,
+      todayDerisk,
       sentiment,
       reviews,
       kpi: {
@@ -361,6 +411,7 @@ export async function getDashboard(): Promise<Dashboard> {
         accuracy7d,
         selfRating,
         strategyPnl,
+        mgmtAlpha,
         bestStock,
         correctStreak,
         gradedCount: graded.length,
@@ -375,6 +426,7 @@ export async function getDashboard(): Promise<Dashboard> {
       todayHolds: [],
       yesterday: [],
       commodities: [],
+      todayDerisk: [],
       sentiment: neutralSentiment(),
       reviews: [],
       kpi: {
@@ -382,6 +434,7 @@ export async function getDashboard(): Promise<Dashboard> {
         accuracy7d: null,
         selfRating: null,
         strategyPnl: null,
+        mgmtAlpha: null,
         bestStock: null,
         correctStreak: 0,
         gradedCount: 0,

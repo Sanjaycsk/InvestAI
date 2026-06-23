@@ -101,6 +101,48 @@ function allocations(recs: Rec[]): number[] {
   return out;
 }
 
+// Compact intraday progression for one stock: the 10:00 confirm run and the
+// 3:00 PM de-risk run, shown only once those runs have written something.
+// Run 1's morning verdict stays the headline; this is just "what happened next".
+function IntradayTimeline({ r }: { r: Rec }) {
+  const hasRun2 = !!r.run2Status || (!!r.run2Action && r.run2Action !== "None");
+  const hasRun3 = !!r.run3Status || (!!r.run3Action && r.run3Action !== "None");
+  if (!hasRun2 && !hasRun3) return null;
+
+  const statusCls = (s: string | null) =>
+    s === "Broken" ? "neg" : s === "Weakening" ? "warn" : "pos";
+
+  const run3Text =
+    r.run3Action === "Exit"
+      ? `sold${r.exitPrice != null ? " @ " + fmtPrice(r.exitPrice) : ""}`
+      : r.run3Action === "Trim"
+      ? `trimmed${r.exitPrice != null ? " @ " + fmtPrice(r.exitPrice) : ""}`
+      : (r.run3Status ?? "checked").toLowerCase();
+
+  return (
+    <div className="intraday">
+      <span className="intraday-label">Through the day</span>
+      {hasRun2 && (
+        <span className={`leg ${statusCls(r.run2Status)}`}>
+          10 AM: {(r.run2Status ?? "checked").toLowerCase()}
+          {r.run2Action === "Watch" ? " · watch" : ""}
+        </span>
+      )}
+      {hasRun3 && (
+        <span
+          className={`leg ${
+            r.run3Action === "Exit" || r.run3Action === "Trim"
+              ? "neg"
+              : statusCls(r.run3Status)
+          }`}
+        >
+          3 PM: {run3Text}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function StockRow({
   r,
   alloc,
@@ -152,6 +194,7 @@ function StockRow({
         )}
       </div>
       {showWhy && r.why && <div className="why">{plainify(r.why)}</div>}
+      <IntradayTimeline r={r} />
     </li>
   );
 }
@@ -411,6 +454,18 @@ export default async function Page() {
               : undefined
           }
         />
+        <Kpi
+          label="Saved by selling early"
+          value={kpi.mgmtAlpha === null ? "—" : signed(kpi.mgmtAlpha)}
+          tone={
+            kpi.mgmtAlpha === null
+              ? "neutral"
+              : kpi.mgmtAlpha >= 0
+              ? "pos"
+              : "neg"
+          }
+          hint="from the 3 PM de-risk check"
+        />
       </section>
 
       {/* Accuracy chart */}
@@ -544,6 +599,41 @@ export default async function Page() {
           <p className="muted empty">No HOLD calls for the latest day.</p>
         )}
       </section>
+
+      {/* Today's de-risk — Run 3 sold/trimmed before the 3:30 close */}
+      {d.todayDerisk.length > 0 && (
+        <section className="card">
+          <div className="card-head">
+            <h2 className="sell">🛡️ Sold before the close</h2>
+            <span className="muted">3 PM de-risk</span>
+          </div>
+          <ul className="stock-list">
+            {d.todayDerisk.map((r, i) => (
+              <li className="stock-row col" key={i}>
+                <div className="stock-row-top">
+                  <div className="stock-main">
+                    <span className="ticker">{r.ticker ?? "—"}</span>
+                    <span className="verdict sell">
+                      {r.run3Action === "Exit" ? "Sold" : "Trimmed"}
+                    </span>
+                  </div>
+                  <div className="stock-meta">
+                    {r.exitPrice != null && (
+                      <span className="price">{fmtPrice(r.exitPrice)}</span>
+                    )}
+                  </div>
+                </div>
+                {r.run3Note && <div className="why">{plainify(r.run3Note)}</div>}
+              </li>
+            ))}
+          </ul>
+          <p className="explain">
+            These were closed near 3 PM because the morning reason to hold them
+            broke during the day — locking in the result before the market shut, so
+            an overnight drop can&apos;t hurt.
+          </p>
+        </section>
+      )}
 
       {/* Yesterday — only the standout hits and worst misses */}
       <section className="card">
