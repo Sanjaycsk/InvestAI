@@ -207,6 +207,133 @@ body {
   color: var(--red);
   border-color: color-mix(in srgb, var(--red) 40%, transparent);
 }
+/* ---- coffee-shop panel ---- */
+.coffee-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 6px -4px 0;
+  padding: 0 4px;
+}
+.coffee-matrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 12px;
+}
+.coffee-matrix th,
+.coffee-matrix td {
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+.coffee-matrix thead .cm-tk {
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 700;
+}
+.coffee-matrix .cm-corner,
+.coffee-matrix .cm-friend {
+  position: sticky;
+  left: 0;
+  background: var(--card);
+  text-align: left;
+  z-index: 1;
+}
+.coffee-matrix .cm-corner {
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 700;
+}
+.cm-friend .cm-emoji {
+  margin-right: 5px;
+}
+.cm-friend .cm-name {
+  font-weight: 700;
+}
+.cm-friend .cm-tag {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.stance {
+  display: inline-block;
+  min-width: 42px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.stance.sm {
+  min-width: 0;
+  padding: 1px 7px;
+  font-size: 10px;
+}
+.st-buy {
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 16%, transparent);
+}
+.st-sip {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.st-hold {
+  color: var(--yellow);
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+}
+.st-wait {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+}
+.st-avoid {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 16%, transparent);
+}
+.st-punt {
+  color: #b69bff;
+  background: color-mix(in srgb, #b69bff 16%, transparent);
+}
+.st-none {
+  color: var(--muted);
+}
+.coffee-takes {
+  margin-top: 12px;
+}
+.coffee-takes summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--accent);
+}
+.ct-stock {
+  margin-top: 10px;
+}
+.ct-tk {
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.ct-stock ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ct-stock li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.ct-who {
+  font-weight: 650;
+  min-width: 84px;
+  flex-shrink: 0;
+}
+.ct-take {
+  flex: 1;
+}
 .alloc {
   font-size: 13px;
   font-weight: 700;

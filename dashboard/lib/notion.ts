@@ -7,6 +7,10 @@ const NOTION_VERSION = "2025-09-03";
 
 const RECS_DS = process.env.NOTION_RECOMMENDATIONS_DS!;
 const REVIEW_DS = process.env.NOTION_DAILY_REVIEW_DS!;
+// A data-source id is an identifier, not a secret (NOTION_TOKEN is the secret),
+// so a hardcoded fallback is fine and saves adding a new Vercel env var.
+const COFFEE_DS =
+  process.env.NOTION_COFFEESHOP_DS || "fee73e14-f1c4-48b7-a285-c319ccb781b7";
 
 function headers() {
   return {
@@ -144,6 +148,28 @@ function mapReview(page: any): Review {
   };
 }
 
+// One character's call on one shortlisted stock, from the coffee-shop panel.
+export type CoffeeOpinion = {
+  date: string | null;
+  ticker: string | null;
+  persona: string | null; // Vihaan | Aarav | Rohan | Meera | Sanjay | Diya
+  stance: string | null; // Buy | SIP | Hold | Wait | Avoid | Punt
+  horizon: string | null; // Long | Short | Mixed
+  take: string | null;
+};
+
+function mapCoffee(page: any): CoffeeOpinion {
+  const pr = page.properties;
+  return {
+    date: pDate(pr["Date"]),
+    ticker: pText(pr["Ticker"]),
+    persona: pSelect(pr["Persona"]),
+    stance: pSelect(pr["Stance"]),
+    horizon: pSelect(pr["Horizon"]),
+    take: pText(pr["Take"]),
+  };
+}
+
 export type MarketSentiment = {
   label: string; // e.g. "Bullish", "Risk-off"
   tone: "pos" | "neg" | "neutral";
@@ -164,6 +190,8 @@ export type Dashboard = {
   yesterday: Rec[];
   commodities: Rec[]; // latest-day Gold (GOLDBEES) + Silver (SILVERBEES)
   todayDerisk: Rec[]; // latest-day Run 3 de-risk actions (Exit / Trim)
+  coffee: CoffeeOpinion[]; // coffee-shop panel for its latest date
+  coffeeDate: string | null;
   sentiment: MarketSentiment;
   reviews: Review[]; // ascending by date, for the chart
   kpi: {
@@ -283,17 +311,32 @@ function computeSentiment(
 
 export async function getDashboard(): Promise<Dashboard> {
   try {
-    const [recPages, reviewPages] = await Promise.all([
+    const [recPages, reviewPages, coffeePages] = await Promise.all([
       queryAll(RECS_DS, {
         sorts: [{ property: "Date", direction: "descending" }],
       }),
       queryAll(REVIEW_DS, {
         sorts: [{ property: "Date", direction: "ascending" }],
       }),
+      // New, optional feature — never let a Coffee Shop hiccup break the page.
+      queryAll(COFFEE_DS, {
+        sorts: [{ property: "Date", direction: "descending" }],
+      }).catch(() => [] as any[]),
     ]);
 
     const recs = recPages.map(mapRec);
     const reviews = reviewPages.map(mapReview).filter((r) => r.date);
+
+    // Coffee-shop opinions, narrowed to the most recent date that has any.
+    const coffeeAll = coffeePages
+      .map(mapCoffee)
+      .filter((c) => c.date && c.ticker && c.persona);
+    const coffeeDate = distinctDatesDesc(
+      coffeeAll.map((c) => ({ date: c.date } as Rec))
+    )[0] ?? null;
+    const coffee = coffeeDate
+      ? coffeeAll.filter((c) => c.date === coffeeDate)
+      : [];
 
     const dates = distinctDatesDesc(recs);
     const latestDate = dates[0] ?? null;
@@ -404,6 +447,8 @@ export async function getDashboard(): Promise<Dashboard> {
       yesterday,
       commodities,
       todayDerisk,
+      coffee,
+      coffeeDate,
       sentiment,
       reviews,
       kpi: {
@@ -427,6 +472,8 @@ export async function getDashboard(): Promise<Dashboard> {
       yesterday: [],
       commodities: [],
       todayDerisk: [],
+      coffee: [],
+      coffeeDate: null,
       sentiment: neutralSentiment(),
       reviews: [],
       kpi: {
