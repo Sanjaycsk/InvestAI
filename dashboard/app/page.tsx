@@ -258,7 +258,7 @@ const PERSONAS: { key: string; emoji: string; tag: string }[] = [
   { key: "Aarav", emoji: "⚡", tag: "the Hotshot" },
   { key: "Rohan", emoji: "👀", tag: "the Window-Shopper" },
   { key: "Meera", emoji: "💼", tag: "the Delegator" },
-  { key: "Sanjay", emoji: "🪙", tag: "the Shoestring" },
+  { key: "Neel", emoji: "🪙", tag: "the Shoestring" },
   { key: "Diya", emoji: "🎲", tag: "the Experimenter" },
 ];
 const STANCE_CLS: Record<string, string> = {
