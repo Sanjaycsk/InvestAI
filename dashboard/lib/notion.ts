@@ -152,10 +152,11 @@ function mapReview(page: any): Review {
 export type CoffeeOpinion = {
   date: string | null;
   ticker: string | null;
-  persona: string | null; // Vihaan | Aarav | Rohan | Meera | Sanjay | Diya
+  persona: string | null; // Vihaan | Aarav | Rohan | Meera | Neel | Diya
   stance: string | null; // Buy | SIP | Hold | Wait | Avoid | Punt
   horizon: string | null; // Long | Short | Mixed
   take: string | null;
+  run: string | null; // Pre-market | Confirm | De-risk
 };
 
 function mapCoffee(page: any): CoffeeOpinion {
@@ -167,6 +168,7 @@ function mapCoffee(page: any): CoffeeOpinion {
     stance: pSelect(pr["Stance"]),
     horizon: pSelect(pr["Horizon"]),
     take: pText(pr["Take"]),
+    run: pSelect(pr["Run"]),
   };
 }
 

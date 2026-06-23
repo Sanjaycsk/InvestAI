@@ -207,6 +207,29 @@ body {
   color: var(--red);
   border-color: color-mix(in srgb, var(--red) 40%, transparent);
 }
+/* ---- tab nav ---- */
+.tabnav {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+.tabnav a {
+  flex: 1;
+  text-align: center;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 650;
+  font-size: 13px;
+  text-decoration: none;
+}
+.tabnav a.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+}
 /* ---- coffee-shop panel ---- */
 .coffee-scroll {
   overflow-x: auto;
