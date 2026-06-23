@@ -157,6 +157,7 @@ export type CoffeeOpinion = {
   horizon: string | null; // Long | Short | Mixed
   take: string | null;
   run: string | null; // Pre-market | Confirm | De-risk
+  debate: string | null; // per-ticker transcript (set on that ticker's Vihaan row)
 };
 
 function mapCoffee(page: any): CoffeeOpinion {
@@ -169,6 +170,7 @@ function mapCoffee(page: any): CoffeeOpinion {
     horizon: pSelect(pr["Horizon"]),
     take: pText(pr["Take"]),
     run: pSelect(pr["Run"]),
+    debate: pText(pr["Debate"]),
   };
 }
 

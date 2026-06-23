@@ -342,6 +342,31 @@ body {
   font-size: 12px;
   margin-bottom: 3px;
 }
+.debate {
+  margin: 4px 0 8px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--line);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  border-radius: 0 8px 8px 0;
+}
+.debate-line {
+  margin: 0 0 5px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.debate-line:last-child {
+  margin-bottom: 0;
+}
+.dl-who {
+  font-weight: 700;
+  margin-right: 6px;
+}
+.dl-text {
+  color: var(--muted);
+}
+.ct-takes {
+  margin-top: 4px;
+}
 .ct-stock ul {
   list-style: none;
   margin: 0;

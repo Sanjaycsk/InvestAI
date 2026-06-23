@@ -95,33 +95,64 @@ export default function CoffeeShop({
         </table>
       </div>
       <details className="coffee-takes">
-        <summary>Hear them out</summary>
-        {tickers.map((t) => (
-          <div className="ct-stock" key={t}>
-            <div className="ct-tk">{t}</div>
-            <ul>
-              {PERSONAS.map((p) => {
-                const o = lookup.get(k(p.key, t));
-                if (!o?.take) return null;
-                return (
-                  <li key={p.key}>
-                    <span className="ct-who">
-                      {p.emoji} {p.key}
-                    </span>
-                    <span
-                      className={`stance sm ${
-                        o.stance ? STANCE_CLS[o.stance] ?? "" : ""
-                      }`}
-                    >
-                      {o.stance}
-                    </span>
-                    <span className="ct-take">{o.take}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+        <summary>💬 Hear them debate</summary>
+        {tickers.map((t) => {
+          const transcript =
+            coffee.find((c) => c.ticker === t && c.debate)?.debate ?? null;
+          const lines = transcript
+            ? transcript
+                .split(/\r?\n/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : [];
+          return (
+            <div className="ct-stock" key={t}>
+              <div className="ct-tk">{t}</div>
+              {lines.length > 0 && (
+                <div className="debate">
+                  {lines.map((ln, i) => {
+                    const m = ln.match(/^([A-Za-z]+)\s*[:–—-]\s*(.*)$/);
+                    const who = m ? m[1] : null;
+                    const emoji = who
+                      ? PERSONAS.find((p) => p.key === who)?.emoji ?? "💬"
+                      : "";
+                    return (
+                      <p className="debate-line" key={i}>
+                        {who && (
+                          <span className="dl-who">
+                            {emoji} {who}
+                          </span>
+                        )}
+                        <span className="dl-text">{m ? m[2] : ln}</span>
+                      </p>
+                    );
+                  })}
+                </div>
+              )}
+              <ul className="ct-takes">
+                {PERSONAS.map((p) => {
+                  const o = lookup.get(k(p.key, t));
+                  if (!o?.take) return null;
+                  return (
+                    <li key={p.key}>
+                      <span className="ct-who">
+                        {p.emoji} {p.key}
+                      </span>
+                      <span
+                        className={`stance sm ${
+                          o.stance ? STANCE_CLS[o.stance] ?? "" : ""
+                        }`}
+                      >
+                        {o.stance}
+                      </span>
+                      <span className="ct-take">{o.take}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
       </details>
     </section>
   );
