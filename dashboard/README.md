@@ -4,14 +4,23 @@ A mobile-first **PWA** that shows today's InvestAI calls at a glance. Reads
 **live from Notion** (the same Recommendations + Daily Review databases the
 daily agent writes to). Gated by a **shared passcode**.
 
-What you see:
+Two tabs: **📊 Today** and **☕ Coffee Shop**.
+
+**Today** shows:
 
 - **Strategy P&L (paper)** — return if you followed every graded BUY (and shorted SELLs)
 - **Accuracy** (latest) + **7-day average** + 🔥 streak
 - **Self-rating** and **best-read stock**
+- **Saved by selling early** — cumulative management alpha from the 15:00 de-risk exits
 - **Accuracy trend** line chart
-- **Buy today** / **Sell-or-avoid today** lists
+- **Buy today** / **Sell-or-avoid today** lists, each row with a **"Through the day"
+  timeline** (10 AM status → 3 PM action) once the intraday runs have annotated it
+- **🛡️ Sold before the close** — the day's Run 3 de-risk exits
 - **Yesterday's calls** with graded outcomes (✓ / ✗) and actual move %
+
+**Coffee Shop** shows the six-persona panel — three per-run matrices (Pre-market →
+After the open → Before the close), friends × the BUY shortlist, with stance chips and
+expandable takes. Perspective only; never changes the verdict.
 
 ---
 
@@ -22,13 +31,18 @@ What you see:
 2. Open the **INVESTAI** page in Notion → **•••** → **Connections** →
    add your integration. (This grants it read access to both databases.)
 
-The two data-source IDs are already known and pre-filled in
+The data-source IDs are already known and pre-filled in
 `.env.local.example`:
 
 | Database        | Data source ID                          |
 | --------------- | --------------------------------------- |
 | Recommendations | `8f225b65-31b3-4f12-9700-34e7a2a459e0`  |
 | Daily Review    | `a69929f7-e386-4d9a-bf60-16f468dd4325`  |
+| Coffee Shop     | `fee73e14-f1c4-48b7-a285-c319ccb781b7`  |
+
+The Coffee Shop id has a built-in fallback in `lib/notion.ts`, so setting
+`NOTION_COFFEESHOP_DS` is optional. (A data-source id isn't a secret — only
+`NOTION_TOKEN` is.)
 
 ## 2. Configure environment
 
@@ -84,10 +98,13 @@ Phone (PWA)  →  Next.js server (Vercel)  →  Notion REST API
                   passcode gate                 └─ Daily Review
 ```
 
-- `lib/notion.ts` — queries both data sources, paginates, computes KPIs. The
-  Notion token lives only server-side; the browser never sees it.
+- `lib/notion.ts` — queries the Notion data sources, paginates, computes KPIs
+  (incl. management alpha + the per-run coffee opinions). The Notion token lives
+  only server-side; the browser never sees it.
 - `middleware.ts` + `app/api/login` — passcode → session cookie.
-- `app/page.tsx` — server component, `force-dynamic` so every load is fresh.
+- `app/page.tsx` (Today) + `app/coffee/page.tsx` (Coffee Shop) — server components,
+  `force-dynamic` so every load is fresh; `app/TabNav.tsx` switches between them.
+- `app/CoffeeShop.tsx` — the friends × shortlist stance matrix (shared by the tab).
 - `app/AccuracyChart.tsx` — dependency-free SVG line chart.
 
 ## "Today" / "Yesterday" logic
