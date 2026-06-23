@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LineChart } from "../Icons";
 
 export default function LoginPage() {
   return (
@@ -41,7 +42,9 @@ function LoginForm() {
   return (
     <main className="login-wrap">
       <form className="login-card" onSubmit={submit}>
-        <div className="login-logo">📈</div>
+        <div className="login-logo">
+          <LineChart size={34} />
+        </div>
         <h1>InvestAI</h1>
         <p className="login-sub">Enter passcode to view today&apos;s calls</p>
         <input

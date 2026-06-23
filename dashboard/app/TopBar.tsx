@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { LineChart, Refresh } from "./Icons";
 
 export default function TopBar({ subtitle }: { subtitle: string }) {
   const router = useRouter();
@@ -16,13 +17,23 @@ export default function TopBar({ subtitle }: { subtitle: string }) {
 
   return (
     <header className="topbar">
-      <div>
-        <div className="topbar-title">📈 InvestAI</div>
-        <div className="topbar-sub">{subtitle}</div>
+      <div className="topbar-brand">
+        <span className="topbar-logo">
+          <LineChart size={20} />
+        </span>
+        <div>
+          <div className="topbar-title">InvestAI</div>
+          <div className="topbar-sub">{subtitle}</div>
+        </div>
       </div>
       <div className="topbar-actions">
-        <button className="ghost" onClick={() => router.refresh()} disabled={busy}>
-          ↻
+        <button
+          className="ghost icon-btn"
+          onClick={() => router.refresh()}
+          disabled={busy}
+          aria-label="Refresh"
+        >
+          <Refresh size={16} />
         </button>
         <button className="ghost" onClick={logout} disabled={busy}>
           Sign out

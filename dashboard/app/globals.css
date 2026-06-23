@@ -11,12 +11,28 @@
   --green-dim: rgba(52, 211, 153, 0.14);
   --red: #fb7185;
   --red-dim: rgba(251, 113, 133, 0.14);
-  --yellow: #fbbf24;
+  --yellow: #f5c451; /* softened from #fbbf24 — less harsh on dark */
+  --yellow-dim: rgba(245, 196, 81, 0.13);
   --accent: #6aa8ff;
   --accent-2: #9b7bff;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -18px rgba(0, 0, 0, 0.75);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --accent-dim: rgba(106, 168, 255, 0.14);
+  --silver: #c2cad9;
+
+  /* layered, soft shadows (shadows.brumm.af style) */
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.25), 0 4px 10px -6px rgba(0, 0, 0, 0.55),
+    0 14px 34px -20px rgba(0, 0, 0, 0.7);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --radius: 18px;
+
+  /* modular type scale (≈1.2 minor third, base 15px) */
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-base: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 19px;
+  --fs-2xl: 26px;
 }
 
 * {
@@ -38,7 +54,7 @@ html {
   background: var(--bg);
 }
 body {
-  font-size: 15px;
+  font-size: var(--fs-base);
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
   min-height: 100dvh;
@@ -87,19 +103,42 @@ body {
   -webkit-backdrop-filter: blur(14px) saturate(1.3);
   border-bottom: 1px solid var(--line-soft);
 }
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.topbar-logo {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  flex-shrink: 0;
+}
 .topbar-title {
-  font-size: 20px;
+  font-size: var(--fs-xl);
   font-weight: 750;
   letter-spacing: -0.01em;
 }
 .topbar-sub {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--muted);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .topbar-actions {
   display: flex;
   gap: 8px;
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  line-height: 0;
 }
 .ghost {
   background: var(--card);
@@ -136,14 +175,14 @@ body {
   box-shadow: var(--shadow-sm);
 }
 .kpi-label {
-  font-size: 10.5px;
+  font-size: var(--fs-2xs);
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 650;
 }
 .kpi-value {
-  font-size: 26px;
+  font-size: var(--fs-2xl);
   font-weight: 760;
   letter-spacing: -0.02em;
   margin-top: 5px;
@@ -155,9 +194,17 @@ body {
   color: var(--red);
 }
 .kpi-hint {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--muted);
   margin-top: 3px;
+}
+.hint-ico {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.hint-ico .flame {
+  color: var(--yellow);
 }
 
 /* ---- cards ---- */
@@ -171,15 +218,28 @@ body {
 }
 .card-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
   margin-bottom: 12px;
 }
+.card-head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 .card-head h2 {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-lg);
   margin: 0;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+.card-head h2 .ico {
+  flex-shrink: 0;
 }
 .card-head h2.buy {
   color: var(--green);
@@ -187,9 +247,13 @@ body {
 .card-head h2.sell {
   color: var(--red);
 }
+.card-hint {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
 .muted {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 .empty {
   padding: 6px 0 2px;
@@ -271,13 +335,16 @@ body {
 }
 .tabnav a {
   flex: 1;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 9px 10px;
   border-radius: 10px;
   background: transparent;
   color: var(--muted);
   font-weight: 650;
-  font-size: 13px;
+  font-size: var(--fs-md);
   text-decoration: none;
   transition: background 0.18s ease, color 0.18s ease;
 }
@@ -545,12 +612,16 @@ body {
 }
 .verdict.hold {
   color: var(--yellow);
-  background: rgba(245, 196, 81, 0.12);
+  background: var(--yellow-dim);
 }
 
-.commodity-icon {
-  font-size: 17px;
-  line-height: 1;
+.coin-gold {
+  color: var(--yellow);
+  flex-shrink: 0;
+}
+.coin-silver {
+  color: var(--silver);
+  flex-shrink: 0;
 }
 
 /* ---- chart ---- */
@@ -681,7 +752,15 @@ body {
   text-align: center;
 }
 .login-logo {
-  font-size: 36px;
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  border-radius: 18px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
 }
 .login-card h1 {
   margin: 8px 0 2px;
@@ -754,7 +833,7 @@ body {
 }
 .sent-badge.neutral {
   color: var(--yellow);
-  background: rgba(245, 196, 81, 0.12);
+  background: var(--yellow-dim);
 }
 .gauge {
   position: relative;
@@ -813,14 +892,22 @@ body {
 
 /* ---- weekend / market-closed banner ---- */
 .banner {
-  background: rgba(245, 196, 81, 0.12);
-  border: 1px solid rgba(245, 196, 81, 0.4);
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  background: var(--yellow-dim);
+  border: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent);
   color: var(--text);
   border-radius: 12px;
   padding: 11px 13px;
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   line-height: 1.45;
   margin-bottom: 14px;
+}
+.banner-ico {
+  color: var(--yellow);
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 /* ---- plain-English explainer lines ---- */
@@ -912,9 +999,17 @@ body {
   margin-top: 2px;
 }
 .money-headline {
-  font-size: 13.5px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   margin: 0 0 12px;
+}
+.mh-ico {
+  color: var(--green);
+  flex-shrink: 0;
+  align-self: center;
 }
 
 /* ---- misc ---- */
@@ -955,4 +1050,76 @@ details > summary::-webkit-details-marker {
 }
 .coffee-takes[open] > summary::before {
   content: "▾ ";
+}
+
+/* ---- inline SVG icons ---- */
+.ico {
+  display: inline-block;
+  vertical-align: -0.18em;
+}
+
+/* ---- details toggle (compact ⇄ detailed) ---- */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: -4px -2px -4px 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.switch-text {
+  font-size: var(--fs-2xs);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  transition: color 0.18s ease;
+}
+.switch-track {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  transition: background 0.18s ease, border-color 0.18s ease;
+  flex-shrink: 0;
+}
+.switch-track.on {
+  background: linear-gradient(
+    180deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 80%, #000)
+  );
+  border-color: transparent;
+}
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.switch-track.on .switch-thumb {
+  transform: translateX(16px);
+}
+.switch[aria-checked="true"] .switch-text {
+  color: var(--text);
+}
+
+/* Compact view hides the per-stock reasoning; one scannable line per stock.
+   Detailed view (toggle on) reveals it. */
+.list.compact .why,
+.list.compact .intraday {
+  display: none;
+}
+.list.compact .stock-row {
+  padding: 9px 0;
 }

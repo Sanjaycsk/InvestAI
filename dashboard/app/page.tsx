@@ -1,17 +1,32 @@
+import type { ReactNode } from "react";
 import { getDashboard, type Rec } from "@/lib/notion";
 import AccuracyChart from "./AccuracyChart";
 import EquityChart from "./EquityChart";
 import TopBar from "./TopBar";
 import TabNav from "./TabNav";
+import ListCard from "./ListCard";
+import {
+  CircleArrowUp,
+  CircleArrowDown,
+  CircleMinus,
+  Shield,
+  Coins,
+  Moon,
+  Flame,
+  TrendingUp,
+  Activity,
+  Gauge,
+  History,
+} from "./Icons";
 import backtest from "@/data/backtest.json";
 
 // Always render fresh from Notion.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const COMMODITY_META: Record<string, { name: string; icon: string }> = {
-  GOLDBEES: { name: "Gold (GOLDBEES)", icon: "🥇" },
-  SILVERBEES: { name: "Silver (SILVERBEES)", icon: "🥈" },
+const COMMODITY_META: Record<string, { name: string }> = {
+  GOLDBEES: { name: "Gold (GOLDBEES)" },
+  SILVERBEES: { name: "Silver (SILVERBEES)" },
 };
 
 function fmtDate(iso: string | null): string {
@@ -242,7 +257,7 @@ function Kpi({
   label: string;
   value: string;
   tone?: "pos" | "neg" | "neutral";
-  hint?: string;
+  hint?: ReactNode;
 }) {
   return (
     <div className="kpi">
@@ -313,15 +328,195 @@ export default async function Page() {
 
       {weekend && (
         <div className="banner">
-          🛌 The stock market is closed on weekends. You&apos;re looking at{" "}
-          {fmtDate(d.latestDate)}&apos;s reading — fresh picks come back on Monday.
+          <Moon size={16} className="banner-ico" />
+          <span>
+            The stock market is closed on weekends. You&apos;re looking at{" "}
+            {fmtDate(d.latestDate)}&apos;s reading — fresh picks come back on
+            Monday.
+          </span>
         </div>
       )}
+
+      {/* ===== What to do today (action-first) ===== */}
+
+      {/* Today BUY — conviction-weighted allocation + why (detailed by default) */}
+      <ListCard
+        title={
+          <>
+            <CircleArrowUp className="ico" /> Worth buying today
+          </>
+        }
+        titleClass="buy"
+        hint={
+          d.todayBuys.length > 1 ? "% = how to split your money" : undefined
+        }
+        hasItems={d.todayBuys.length > 0}
+        startDetailed
+      >
+        {d.todayBuys.length ? (
+          <ul className="stock-list">
+            {d.todayBuys.map((r, i) => (
+              <StockRow
+                key={i}
+                r={r}
+                alloc={d.todayBuys.length > 1 ? buyAlloc[i] : undefined}
+                showWhy
+              />
+            ))}
+          </ul>
+        ) : (
+          <p className="muted empty">No BUY calls for the latest day.</p>
+        )}
+      </ListCard>
+
+      {/* Today SELL — with why (detailed by default) */}
+      <ListCard
+        title={
+          <>
+            <CircleArrowDown className="ico" /> Avoid or sell today
+          </>
+        }
+        titleClass="sell"
+        hasItems={d.todaySells.length > 0}
+        startDetailed
+      >
+        {d.todaySells.length ? (
+          <ul className="stock-list">
+            {d.todaySells.map((r, i) => (
+              <StockRow key={i} r={r} showWhy />
+            ))}
+          </ul>
+        ) : (
+          <p className="muted empty">No SELL calls for the latest day.</p>
+        )}
+      </ListCard>
+
+      {/* Today HOLD — secondary, so compact by default */}
+      <ListCard
+        title={
+          <>
+            <CircleMinus className="ico" /> Already own it? Just hold
+          </>
+        }
+        titleClass="hold-h"
+        hasItems={d.todayHolds.length > 0}
+      >
+        {d.todayHolds.length ? (
+          <ul className="stock-list">
+            {d.todayHolds.map((r, i) => (
+              <StockRow key={i} r={r} showWhy />
+            ))}
+          </ul>
+        ) : (
+          <p className="muted empty">No HOLD calls for the latest day.</p>
+        )}
+      </ListCard>
+
+      {/* Today's de-risk — Run 3 sold/trimmed before the 3:30 close */}
+      {d.todayDerisk.length > 0 && (
+        <ListCard
+          title={
+            <>
+              <Shield className="ico" /> Sold before the close
+            </>
+          }
+          titleClass="sell"
+        >
+          <ul className="stock-list">
+            {d.todayDerisk.map((r, i) => (
+              <li className="stock-row col" key={i}>
+                <div className="stock-row-top">
+                  <div className="stock-main">
+                    <span className="ticker">{r.ticker ?? "—"}</span>
+                    <span className="verdict sell">
+                      {r.run3Action === "Exit" ? "Sold" : "Trimmed"}
+                    </span>
+                  </div>
+                  <div className="stock-meta">
+                    {r.exitPrice != null && (
+                      <span className="price">{fmtPrice(r.exitPrice)}</span>
+                    )}
+                  </div>
+                </div>
+                {r.run3Note && <div className="why">{plainify(r.run3Note)}</div>}
+              </li>
+            ))}
+          </ul>
+          <p className="explain">
+            These were closed near 3 PM because the morning reason to hold them
+            broke during the day — locking in the result before the market shut,
+            so an overnight drop can&apos;t hurt.
+          </p>
+        </ListCard>
+      )}
+
+      {/* ===== How's it doing (trust) ===== */}
+
+      {/* KPI strip — plain-English scorecards */}
+      <section className="kpi-grid">
+        <Kpi
+          label="Pretend profit so far"
+          value={signed(kpi.strategyPnl)}
+          tone={pnlTone as any}
+          hint={`if you'd followed all ${kpi.gradedCount} graded calls`}
+        />
+        <Kpi
+          label="How often it's right"
+          value={kpi.accuracy === null ? "—" : `${kpi.accuracy.toFixed(0)}%`}
+          tone="neutral"
+          hint={
+            kpi.accuracy7d === null
+              ? "50% is a coin-toss"
+              : `last 7 days: ${kpi.accuracy7d.toFixed(0)}%`
+          }
+        />
+        <Kpi
+          label="Its report card"
+          value={kpi.selfRating === null ? "—" : `${kpi.selfRating.toFixed(0)}/100`}
+          tone="neutral"
+          hint={
+            kpi.correctStreak ? (
+              <span className="hint-ico">
+                <Flame size={12} className="flame" /> {kpi.correctStreak} good
+                days in a row
+              </span>
+            ) : (
+              "the model grades itself"
+            )
+          }
+        />
+        <Kpi
+          label="Most reliable stock"
+          value={kpi.bestStock ? kpi.bestStock.ticker : "—"}
+          tone="neutral"
+          hint={
+            kpi.bestStock
+              ? `right ${kpi.bestStock.hitRate.toFixed(0)}% of ${kpi.bestStock.n} times`
+              : undefined
+          }
+        />
+        <Kpi
+          label="Saved by selling early"
+          value={kpi.mgmtAlpha === null ? "—" : signed(kpi.mgmtAlpha)}
+          tone={
+            kpi.mgmtAlpha === null
+              ? "neutral"
+              : kpi.mgmtAlpha >= 0
+              ? "pos"
+              : "neg"
+          }
+          hint="from the 3 PM de-risk check"
+        />
+      </section>
+
+      {/* ===== Context ===== */}
 
       {/* Market mood */}
       <section className={`card sentiment ${s.tone}`}>
         <div className="card-head">
-          <h2>Today&apos;s market mood</h2>
+          <h2>
+            <Gauge className="ico" /> Today&apos;s market mood
+          </h2>
           <span className={`sent-badge ${s.tone}`}>{s.label}</span>
         </div>
         <div className="gauge">
@@ -349,7 +544,9 @@ export default async function Page() {
       {/* Gold & Silver */}
       <section className="card">
         <div className="card-head">
-          <h2>Gold &amp; Silver</h2>
+          <h2>
+            <Coins className="ico" /> Gold &amp; Silver
+          </h2>
           <span className="muted">safe-haven options</span>
         </div>
         {d.commodities.length ? (
@@ -357,14 +554,18 @@ export default async function Page() {
             {d.commodities.map((r, i) => {
               const meta = COMMODITY_META[r.ticker ?? ""] ?? {
                 name: r.ticker ?? "—",
-                icon: "•",
               };
               const dir = r.expectedDirection ? DIR[r.expectedDirection] : null;
               return (
                 <li className="stock-row col" key={i}>
                   <div className="stock-row-top">
                     <div className="stock-main">
-                      <span className="commodity-icon">{meta.icon}</span>
+                      <Coins
+                        size={20}
+                        className={
+                          r.ticker === "GOLDBEES" ? "coin-gold" : "coin-silver"
+                        }
+                      />
                       <span className="ticker">{meta.name}</span>
                       <span
                         className={`verdict ${
@@ -418,62 +619,14 @@ export default async function Page() {
         )}
       </section>
 
-      {/* KPI strip — plain-English scorecards */}
-      <section className="kpi-grid">
-        <Kpi
-          label="Pretend profit so far"
-          value={signed(kpi.strategyPnl)}
-          tone={pnlTone as any}
-          hint={`if you'd followed all ${kpi.gradedCount} graded calls`}
-        />
-        <Kpi
-          label="How often it's right"
-          value={kpi.accuracy === null ? "—" : `${kpi.accuracy.toFixed(0)}%`}
-          tone="neutral"
-          hint={
-            kpi.accuracy7d === null
-              ? "50% is a coin-toss"
-              : `last 7 days: ${kpi.accuracy7d.toFixed(0)}%`
-          }
-        />
-        <Kpi
-          label="Its report card"
-          value={kpi.selfRating === null ? "—" : `${kpi.selfRating.toFixed(0)}/100`}
-          tone="neutral"
-          hint={
-            kpi.correctStreak
-              ? `🔥 ${kpi.correctStreak} good days in a row`
-              : "the model grades itself"
-          }
-        />
-        <Kpi
-          label="Most reliable stock"
-          value={kpi.bestStock ? kpi.bestStock.ticker : "—"}
-          tone="neutral"
-          hint={
-            kpi.bestStock
-              ? `right ${kpi.bestStock.hitRate.toFixed(0)}% of ${kpi.bestStock.n} times`
-              : undefined
-          }
-        />
-        <Kpi
-          label="Saved by selling early"
-          value={kpi.mgmtAlpha === null ? "—" : signed(kpi.mgmtAlpha)}
-          tone={
-            kpi.mgmtAlpha === null
-              ? "neutral"
-              : kpi.mgmtAlpha >= 0
-              ? "pos"
-              : "neg"
-          }
-          hint="from the 3 PM de-risk check"
-        />
-      </section>
+      {/* ===== Track record (history) ===== */}
 
       {/* Accuracy chart */}
       <section className="card">
         <div className="card-head">
-          <h2>How often it&apos;s been right</h2>
+          <h2>
+            <Activity className="ico" /> How often it&apos;s been right
+          </h2>
           <span className="muted">last {d.reviews.length} days</span>
         </div>
         <AccuracyChart
@@ -488,7 +641,9 @@ export default async function Page() {
       {/* Track Record — 1yr backtest, told as a ₹100 story */}
       <section className="card">
         <div className="card-head">
-          <h2>Does this actually work?</h2>
+          <h2>
+            <TrendingUp className="ico" /> Does this actually work?
+          </h2>
           <span className="muted">1-year test</span>
         </div>
         <p className="explain top">
@@ -523,7 +678,7 @@ export default async function Page() {
           </div>
         </div>
         <p className="money-headline">
-          👉 It beat the market by about{" "}
+          <TrendingUp size={15} className="mh-ico" /> It beat the market by about{" "}
           <strong>{Math.round(backtest.outperformance_pct)}%</strong> over the year.
         </p>
         <EquityChart data={backtest.equity_curve as any} />
@@ -544,108 +699,19 @@ export default async function Page() {
         </p>
       </section>
 
-      {/* Today BUY — with conviction-weighted allocation + why */}
-      <section className="card">
-        <div className="card-head">
-          <h2 className="buy">🟢 Worth buying today</h2>
-          <span className="muted">
-            {d.todayBuys.length > 1 ? "% = how to split your money" : d.todayBuys.length}
-          </span>
-        </div>
-        {d.todayBuys.length ? (
-          <ul className="stock-list">
-            {d.todayBuys.map((r, i) => (
-              <StockRow
-                key={i}
-                r={r}
-                alloc={d.todayBuys.length > 1 ? buyAlloc[i] : undefined}
-                showWhy
-              />
-            ))}
-          </ul>
-        ) : (
-          <p className="muted empty">No BUY calls for the latest day.</p>
-        )}
-      </section>
-
-      {/* Today SELL — with why */}
-      <section className="card">
-        <div className="card-head">
-          <h2 className="sell">🔴 Avoid or sell today</h2>
-          <span className="muted">{d.todaySells.length}</span>
-        </div>
-        {d.todaySells.length ? (
-          <ul className="stock-list">
-            {d.todaySells.map((r, i) => (
-              <StockRow key={i} r={r} showWhy />
-            ))}
-          </ul>
-        ) : (
-          <p className="muted empty">No SELL calls for the latest day.</p>
-        )}
-      </section>
-
-      {/* Today HOLD — already own it? sit tight */}
-      <section className="card">
-        <div className="card-head">
-          <h2 className="hold-h">🟡 Already own it? Just hold</h2>
-          <span className="muted">{d.todayHolds.length}</span>
-        </div>
-        {d.todayHolds.length ? (
-          <ul className="stock-list">
-            {d.todayHolds.map((r, i) => (
-              <StockRow key={i} r={r} showWhy />
-            ))}
-          </ul>
-        ) : (
-          <p className="muted empty">No HOLD calls for the latest day.</p>
-        )}
-      </section>
-
-      {/* Today's de-risk — Run 3 sold/trimmed before the 3:30 close */}
-      {d.todayDerisk.length > 0 && (
-        <section className="card">
-          <div className="card-head">
-            <h2 className="sell">🛡️ Sold before the close</h2>
-            <span className="muted">3 PM de-risk</span>
-          </div>
-          <ul className="stock-list">
-            {d.todayDerisk.map((r, i) => (
-              <li className="stock-row col" key={i}>
-                <div className="stock-row-top">
-                  <div className="stock-main">
-                    <span className="ticker">{r.ticker ?? "—"}</span>
-                    <span className="verdict sell">
-                      {r.run3Action === "Exit" ? "Sold" : "Trimmed"}
-                    </span>
-                  </div>
-                  <div className="stock-meta">
-                    {r.exitPrice != null && (
-                      <span className="price">{fmtPrice(r.exitPrice)}</span>
-                    )}
-                  </div>
-                </div>
-                {r.run3Note && <div className="why">{plainify(r.run3Note)}</div>}
-              </li>
-            ))}
-          </ul>
-          <p className="explain">
-            These were closed near 3 PM because the morning reason to hold them
-            broke during the day — locking in the result before the market shut, so
-            an overnight drop can&apos;t hurt.
-          </p>
-        </section>
-      )}
-
-      {/* Yesterday — only the standout hits and worst misses */}
-      <section className="card">
-        <div className="card-head">
-          <h2>Yesterday&apos;s scorecard</h2>
-          <span className="muted">{fmtDate(d.prevDate)}</span>
-        </div>
+      {/* Yesterday — only the standout hits and worst misses (compact by default) */}
+      <ListCard
+        title={
+          <>
+            <History className="ico" /> Yesterday&apos;s scorecard
+          </>
+        }
+        hint={fmtDate(d.prevDate)}
+        hasItems={gradedYday.length > 0}
+      >
         {gradedYday.length ? (
           <>
-            <div className="yday-sub ok">✅ Worked well</div>
+            <div className="yday-sub ok">Worked well</div>
             {yBest.length ? (
               <ul className="stock-list">
                 {yBest.map((r, i) => (
@@ -655,7 +721,7 @@ export default async function Page() {
             ) : (
               <p className="muted empty">No correct calls yesterday.</p>
             )}
-            <div className="yday-sub bad">❌ Missed</div>
+            <div className="yday-sub bad">Missed</div>
             {yWorst.length ? (
               <ul className="stock-list">
                 {yWorst.map((r, i) => (
@@ -671,7 +737,7 @@ export default async function Page() {
             Yesterday&apos;s calls are still being graded.
           </p>
         )}
-      </section>
+      </ListCard>
 
       <footer className="foot">
         Reads live from Notion · {fmtDate(d.latestDate)}
