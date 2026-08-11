@@ -7,6 +7,7 @@ config/.env
 data_store/
 *.db
 *.sqlite3
+*.joblib
 
 # Python
 __pycache__/

@@ -7,6 +7,8 @@ import TabNav from "./TabNav";
 import Section from "./Section";
 import Panel from "./Panel";
 import StockDetail from "./StockDetail";
+import SectorBoard from "./SectorBoard";
+import MLTrendPanel, { ML_HORIZON_DAYS } from "./MLTrend";
 import {
   CircleArrowUp,
   CircleArrowDown,
@@ -17,6 +19,10 @@ import {
   Flame,
   TrendingUp,
   Gauge,
+  Clock,
+  Layers,
+  Smile,
+  Frown,
 } from "./Icons";
 import backtest from "@/data/backtest.json";
 
@@ -73,6 +79,46 @@ function isWeekendIST(): boolean {
     weekday: "short",
   }).format(new Date());
   return d === "Sat" || d === "Sun";
+}
+
+// Run 1 is frozen at 08:30 IST, but you might not open this until 10 or
+// 10:30 — by then the Ref Price has drifted. Rather than pretend the 9:00
+// instant is still "now", tell you the actual recommended buying window
+// (9:15–11:00 AM) and where you stand in it, so a late look doesn't read as
+// a stale one. Past 11:00, point at the 10 AM confirm check instead of the
+// morning Ref Price.
+function entryWindowIST(): { phase: "before" | "window" | "late" | "closed"; text: string } | null {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    weekday: "short",
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const weekday = get("weekday");
+  if (weekday === "Sat" || weekday === "Sun") return null;
+  const mins = Number(get("hour")) * 60 + Number(get("minute"));
+  const OPEN = 9 * 60 + 15;
+  const WINDOW_END = 11 * 60;
+  const CLOSE = 15 * 60 + 30;
+  if (mins < OPEN) {
+    return { phase: "before", text: "Market opens at 9:15 — today's calls are set and waiting." };
+  }
+  if (mins <= WINDOW_END) {
+    return {
+      phase: "window",
+      text: "You're in the recommended buying window (9:15–11:00 AM) — the prices below are still fresh.",
+    };
+  }
+  if (mins < CLOSE) {
+    return {
+      phase: "late",
+      text:
+        "Past the 9:15–11:00 AM buying window — the price may have moved from this morning's Ref Price. Check each stock's 10 AM confirm status (tap to expand) before buying.",
+    };
+  }
+  return { phase: "closed", text: "Market's closed for the day — see the 3 PM de-risk check below for what happened." };
 }
 
 const VERDICT_WORD: Record<string, string> = {
@@ -262,6 +308,7 @@ export default async function Page() {
   const buyAlloc = allocations(d.todayBuys);
 
   const weekend = isWeekendIST();
+  const entryWindow = weekend ? null : entryWindowIST();
 
   return (
     <main className="container">
@@ -276,6 +323,13 @@ export default async function Page() {
             {fmtDate(d.latestDate)}&apos;s reading — fresh picks come back on
             Monday.
           </span>
+        </div>
+      )}
+
+      {entryWindow && (
+        <div className={`banner window-${entryWindow.phase}`}>
+          <Clock size={16} className="banner-ico" />
+          <span>{entryWindow.text}</span>
         </div>
       )}
 
@@ -437,6 +491,20 @@ export default async function Page() {
         </Panel>
       )}
 
+      {/* Sector view — same 26 calls, grouped so a whole-sector move (e.g.
+          every bank BUY today) is visible at a glance, not just name by
+          name. Collapsed by default; it's a scan tool, not the headline. */}
+      <Section
+        title={
+          <>
+            <Layers className="ico" /> By sector
+          </>
+        }
+        summary="Is a whole sector leaning up or down?"
+      >
+        <SectorBoard stocks={d.today} />
+      </Section>
+
       {/* ============ TIER 2 — How it's doing (glance) ============ */}
       <div className="group-eyebrow">How it&apos;s doing</div>
 
@@ -490,6 +558,30 @@ export default async function Page() {
           hint="from the 3 PM de-risk check"
         />
       </section>
+
+      {/* Report-card mood — the model holds itself to a 75% accuracy bar;
+          this is the plain-English "did it hit that bar today" read, meant
+          to reinforce the habit the same way the model's own Step 1.5
+          learning loop does (see agent/routine_prompt.md). */}
+      {kpi.accuracy !== null && (
+        <div className={`mood-badge ${kpi.accuracy >= 75 ? "pos" : "neg"}`}>
+          {kpi.accuracy >= 75 ? (
+            <Smile size={26} className="mood-ico" />
+          ) : (
+            <Frown size={26} className="mood-ico" />
+          )}
+          <div className="mood-text">
+            <div className="mood-title">
+              {kpi.accuracy >= 75 ? "On target today" : "Below target today"}
+            </div>
+            <div className="mood-sub">
+              {kpi.accuracy >= 75
+                ? `${kpi.accuracy.toFixed(0)}% accuracy — at or above the 75% bar the model holds itself to. Keep this up.`
+                : `${kpi.accuracy.toFixed(0)}% accuracy — below the 75% bar. The model treats this as a signal to tighten up tomorrow, not just a number.`}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ============ TIER 3 — Context & track record ============ */}
       <div className="group-eyebrow">Context &amp; track record</div>
@@ -572,6 +664,22 @@ export default async function Page() {
           <p className="muted empty">No Gold/Silver data for the latest day.</p>
         )}
       </Panel>
+
+      {/* A second, independent opinion on where things might be headed —
+          a traditional ML model's 15-trading-day lean, separate from the
+          LLM's own day-to-day verdict above. Collapsed by default; its own
+          honest walk-forward accuracy is surfaced right at the top of the
+          panel, not hidden. */}
+      <Section
+        title={
+          <>
+            <TrendingUp className="ico" /> {ML_HORIZON_DAYS}-day trend forecast (ML)
+          </>
+        }
+        summary="A second opinion, not the daily verdict"
+      >
+        <MLTrendPanel />
+      </Section>
 
       {/* Deeper trust/context content, collapsed by default — the daily
           view above should answer "what do I do today"; this answers

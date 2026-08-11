@@ -1,5 +1,8 @@
 import { type Rec } from "@/lib/notion";
 import { plainify } from "@/lib/plain";
+import { sectorFor, SECTOR_LABEL } from "@/lib/sectors";
+import OwnBadge from "./OwnBadge";
+import { mlPredictionFor, CLASS_META, ML_HORIZON_DAYS } from "./MLTrend";
 
 // The expanded "more details" view for one stock: what the model decided, how
 // sure it was, and the plain-English reason behind each of the six factors it
@@ -27,18 +30,42 @@ export default function StockDetail({ r }: { r: Rec }) {
   const v = r.verdict ? VERDICT_WORD[r.verdict] : null;
   const dir = r.expectedDirection ? DIR[r.expectedDirection] : null;
   const conf = typeof r.compositeScore === "number" ? r.compositeScore : null;
+  const sectorLabel = r.ticker ? SECTOR_LABEL[sectorFor(r.ticker)] : null;
+  const ml = mlPredictionFor(r.ticker);
+  const mlMeta = ml ? CLASS_META[ml.predicted_class] : null;
 
   return (
     <div className="sd">
       <div className="sd-top">
         {v && <span className={`sd-verdict ${v.cls}`}>{v.word}</span>}
         {r.category && <span className="sd-chip">{r.category}</span>}
+        {sectorLabel && sectorLabel !== "Other" && (
+          <span className="sd-chip">{sectorLabel}</span>
+        )}
         {dir && (
           <span className={`sd-chip ${dir.cls}`}>
             {dir.arrow} {dir.text}
           </span>
         )}
       </div>
+
+      {/* Personal action: everyone viewing this dashboard has a different
+          real portfolio, so this turns the model's verdict into "what do I
+          actually do", remembered on this device only. */}
+      <OwnBadge ticker={r.ticker} verdict={r.verdict} />
+
+      {/* A second, independent opinion: a traditional ML model's short-horizon
+          lean, separate from the LLM's own (1-day) Expected Direction above.
+          See MLTrend.tsx for the honest walk-forward accuracy caveat. */}
+      {ml && mlMeta && (
+        <div className="ml-chip">
+          <span className="ml-chip-label">{ML_HORIZON_DAYS}-day ML lean</span>
+          <span className={`dir ${mlMeta.cls}`}>
+            {mlMeta.arrow} {mlMeta.text}
+          </span>
+          <span className="conf">{ml.confidence_pct}% sure</span>
+        </div>
+      )}
 
       <div className="sd-meta">
         {r.refPrice != null && (

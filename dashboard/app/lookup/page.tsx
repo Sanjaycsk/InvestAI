@@ -3,7 +3,8 @@ import { plainify } from "@/lib/plain";
 import TopBar from "../TopBar";
 import TabNav from "../TabNav";
 import StockLookup from "../StockLookup";
-import { AlertTriangle, History } from "../Icons";
+import DateFilter from "../DateFilter";
+import { AlertTriangle, History, Clock } from "../Icons";
 
 // Always render fresh from Notion.
 export const dynamic = "force-dynamic";
@@ -112,6 +113,19 @@ export default async function LookupPage() {
           coffee={d.coffee}
           priceHistory={d.priceHistory}
         />
+      </section>
+
+      {/* Browse a past day — capped at the last 7 trading days on purpose;
+          this is a quick recent-history check, not a full archive (the
+          1-year backtest further down covers the long view). */}
+      <div className="group-eyebrow">Past week</div>
+      <section className="card">
+        <div className="card-head">
+          <h2>
+            <Clock className="ico" /> Browse a past day
+          </h2>
+        </div>
+        <DateFilter days={d.recentDays} />
       </section>
 
       {/* Error management — a GENERAL summary of the kind of mistakes this

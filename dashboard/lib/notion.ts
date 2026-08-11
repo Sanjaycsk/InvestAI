@@ -271,6 +271,11 @@ export type Dashboard = {
   trackRecordDays: number; // distinct graded trading days behind tickerStats
   // Ref Price over time per ticker, ascending by date — for the stock-lookup price chart.
   priceHistory: Record<string, { date: string; refPrice: number }[]>;
+  // Last 7 distinct trading days (descending, today first) with every
+  // instrument's call that day — powers the "browse a past day" filter.
+  // Capped at 7 so this stays a quick recent-history check, not a full
+  // archive browser.
+  recentDays: { date: string; recs: Rec[] }[];
   // What to check before trusting today's calls — surfaced from the Daily
   // Review fields that used to exist in Notion but never rendered anywhere.
   errorManagement: {
@@ -661,6 +666,16 @@ export async function getDashboard(): Promise<Dashboard> {
         byScore(a, b)
     );
 
+    // Last 7 distinct trading days, each verdict-grouped like `today` above.
+    const recentDays: Dashboard["recentDays"] = dates.slice(0, 7).map((date) => ({
+      date,
+      recs: [...onDate(date)].sort(
+        (a, b) =>
+          (VERDICT_RANK[a.verdict ?? ""] ?? 3) - (VERDICT_RANK[b.verdict ?? ""] ?? 3) ||
+          byScore(a, b)
+      ),
+    }));
+
     return {
       latestDate,
       prevDate,
@@ -693,6 +708,7 @@ export async function getDashboard(): Promise<Dashboard> {
       tickerStats,
       trackRecordDays,
       priceHistory,
+      recentDays,
       errorManagement,
     };
   } catch (e: any) {
@@ -728,6 +744,7 @@ export async function getDashboard(): Promise<Dashboard> {
       tickerStats: {},
       trackRecordDays: 0,
       priceHistory: {},
+      recentDays: [],
       errorManagement: {
         asOfDate: null,
         correctableErrors: [],

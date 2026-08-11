@@ -1,0 +1,384 @@
+{
+  "generated_at": "2026-08-11T17:20:32+00:00",
+  "kind": "ml-trend",
+  "horizon_trading_days": 5,
+  "model": "HistGradientBoostingClassifier (scikit-learn), pooled across all instruments; features = own technicals (incl. open-gap, ATR, seasonality) + Nifty/US/USDINR/crude/VIX macro regime + sector-relative strength + price-data-only mood index",
+  "label_thresholds": {
+    "method": "volatility-adjusted",
+    "vol_multiplier": 0.5
+  },
+  "validation": {
+    "method": "5-fold time-based expanding-window walk-forward",
+    "n_folds": 5,
+    "n_test_rows": 11556,
+    "accuracy_pct": 36.9,
+    "baseline_class": "Flat",
+    "baseline_accuracy_pct": 42.9,
+    "beats_baseline": false,
+    "per_class": {
+      "Up": {
+        "precision_pct": 30.6,
+        "recall_pct": 41.6,
+        "n": 3404
+      },
+      "Flat": {
+        "precision_pct": 44.8,
+        "recall_pct": 47.0,
+        "n": 4961
+      },
+      "Down": {
+        "precision_pct": 29.9,
+        "recall_pct": 16.1,
+        "n": 3191
+      }
+    },
+    "per_fold": [
+      {
+        "test_start": "2024-07-10",
+        "test_end": "2024-12-04",
+        "n_test": 2232,
+        "accuracy_pct": 38.0
+      },
+      {
+        "test_start": "2024-12-04",
+        "test_end": "2025-05-09",
+        "n_test": 2256,
+        "accuracy_pct": 38.0
+      },
+      {
+        "test_start": "2025-05-09",
+        "test_end": "2025-09-30",
+        "n_test": 2284,
+        "accuracy_pct": 36.4
+      },
+      {
+        "test_start": "2025-09-30",
+        "test_end": "2026-02-27",
+        "n_test": 2366,
+        "accuracy_pct": 35.7
+      },
+      {
+        "test_start": "2026-02-27",
+        "test_end": "2026-08-04",
+        "n_test": 2418,
+        "accuracy_pct": 36.4
+      }
+    ]
+  },
+  "live_track_record": null,
+  "predictions": [
+    {
+      "ticker": "ADANIENT",
+      "sector": "energy",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 72.9,
+      "class_probs": {
+        "Down": 19.5,
+        "Flat": 72.9,
+        "Up": 7.6
+      }
+    },
+    {
+      "ticker": "BEL",
+      "sector": "defense",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 48.7,
+      "class_probs": {
+        "Down": 42.9,
+        "Flat": 48.7,
+        "Up": 8.4
+      }
+    },
+    {
+      "ticker": "BHARTIARTL",
+      "sector": "telecom",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 38.7,
+      "class_probs": {
+        "Down": 24.8,
+        "Flat": 38.7,
+        "Up": 36.5
+      }
+    },
+    {
+      "ticker": "BHEL",
+      "sector": "industrials",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 53.7,
+      "class_probs": {
+        "Down": 33.5,
+        "Flat": 53.7,
+        "Up": 12.8
+      }
+    },
+    {
+      "ticker": "BPCL",
+      "sector": "energy",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 70.3,
+      "class_probs": {
+        "Down": 16.9,
+        "Flat": 70.3,
+        "Up": 12.8
+      }
+    },
+    {
+      "ticker": "FEDERALBNK",
+      "sector": "banking",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 50.3,
+      "class_probs": {
+        "Down": 18.6,
+        "Flat": 50.3,
+        "Up": 31.2
+      }
+    },
+    {
+      "ticker": "GOLDBEES",
+      "sector": "commodities",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 46.9,
+      "class_probs": {
+        "Down": 22.0,
+        "Flat": 46.9,
+        "Up": 31.1
+      }
+    },
+    {
+      "ticker": "GROWWN200",
+      "sector": "broad-market",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 69.1,
+      "class_probs": {
+        "Down": 20.5,
+        "Flat": 69.1,
+        "Up": 10.3
+      }
+    },
+    {
+      "ticker": "HDFCBANK",
+      "sector": "banking",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 55.3,
+      "class_probs": {
+        "Down": 31.1,
+        "Flat": 55.3,
+        "Up": 13.6
+      }
+    },
+    {
+      "ticker": "HINDUNILVR",
+      "sector": "fmcg",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 76.4,
+      "class_probs": {
+        "Down": 15.2,
+        "Flat": 76.4,
+        "Up": 8.4
+      }
+    },
+    {
+      "ticker": "ICICIBANK",
+      "sector": "banking",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 50.5,
+      "class_probs": {
+        "Down": 33.6,
+        "Flat": 50.5,
+        "Up": 16.0
+      }
+    },
+    {
+      "ticker": "INFY",
+      "sector": "it",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 57.1,
+      "class_probs": {
+        "Down": 29.2,
+        "Flat": 57.1,
+        "Up": 13.8
+      }
+    },
+    {
+      "ticker": "ITC",
+      "sector": "fmcg",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 44.4,
+      "class_probs": {
+        "Down": 20.3,
+        "Flat": 44.4,
+        "Up": 35.3
+      }
+    },
+    {
+      "ticker": "LT",
+      "sector": "industrials",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Down",
+      "confidence_pct": 40.6,
+      "class_probs": {
+        "Down": 40.6,
+        "Flat": 36.1,
+        "Up": 23.3
+      }
+    },
+    {
+      "ticker": "MARUTI",
+      "sector": "auto",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 54.0,
+      "class_probs": {
+        "Down": 23.2,
+        "Flat": 54.0,
+        "Up": 22.8
+      }
+    },
+    {
+      "ticker": "NTPC",
+      "sector": "power",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Down",
+      "confidence_pct": 42.0,
+      "class_probs": {
+        "Down": 42.0,
+        "Flat": 38.7,
+        "Up": 19.4
+      }
+    },
+    {
+      "ticker": "RELIANCE",
+      "sector": "energy",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 42.2,
+      "class_probs": {
+        "Down": 42.1,
+        "Flat": 42.2,
+        "Up": 15.7
+      }
+    },
+    {
+      "ticker": "SBIN",
+      "sector": "banking",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Down",
+      "confidence_pct": 41.1,
+      "class_probs": {
+        "Down": 41.1,
+        "Flat": 34.2,
+        "Up": 24.7
+      }
+    },
+    {
+      "ticker": "SILVERBEES",
+      "sector": "commodities",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 54.1,
+      "class_probs": {
+        "Down": 16.2,
+        "Flat": 54.1,
+        "Up": 29.8
+      }
+    },
+    {
+      "ticker": "SUNPHARMA",
+      "sector": "pharma",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 46.4,
+      "class_probs": {
+        "Down": 28.5,
+        "Flat": 46.4,
+        "Up": 25.1
+      }
+    },
+    {
+      "ticker": "SUZLON",
+      "sector": "renewables",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Down",
+      "confidence_pct": 47.8,
+      "class_probs": {
+        "Down": 47.8,
+        "Flat": 46.5,
+        "Up": 5.7
+      }
+    },
+    {
+      "ticker": "TATAPOWER",
+      "sector": "power",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 52.5,
+      "class_probs": {
+        "Down": 30.5,
+        "Flat": 52.5,
+        "Up": 17.0
+      }
+    },
+    {
+      "ticker": "TATASTEEL",
+      "sector": "metals",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 46.7,
+      "class_probs": {
+        "Down": 31.1,
+        "Flat": 46.7,
+        "Up": 22.1
+      }
+    },
+    {
+      "ticker": "TCS",
+      "sector": "it",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 58.6,
+      "class_probs": {
+        "Down": 26.3,
+        "Flat": 58.6,
+        "Up": 15.0
+      }
+    },
+    {
+      "ticker": "VEDL",
+      "sector": "metals",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Flat",
+      "confidence_pct": 54.3,
+      "class_probs": {
+        "Down": 12.9,
+        "Flat": 54.3,
+        "Up": 32.8
+      }
+    },
+    {
+      "ticker": "WAAREEENER",
+      "sector": "renewables",
+      "as_of_date": "2026-08-11",
+      "predicted_class": "Down",
+      "confidence_pct": 46.7,
+      "class_probs": {
+        "Down": 46.7,
+        "Flat": 43.6,
+        "Up": 9.7
+      }
+    }
+  ],
+  "disclaimer": "A traditional ML model (gradient boosting on price/technical/macro features), SEPARATE from the daily LLM agent above \u2014 a second opinion, not a replacement. This predicts a DIRECTIONAL LEAN over 5 trading days, never a price target; short-horizon equity forecasting is inherently noisy. 'Validation' is an honest not-in-sample backtest; 'live track record' (once it exists) is this model's actual graded predictions over time. Research/education only."
+}

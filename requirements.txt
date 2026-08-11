@@ -15,6 +15,9 @@ pyotp>=2.9            # for semi-automated daily Kite login (TOTP)
 # Price history for 200-DMA (free NSE/BSE daily candles)
 yfinance>=0.2.40
 
+# 15-day ML trend model (backtest/train_ml_trend.py) — gradient boosting
+scikit-learn>=1.4
+
 # YouTube transcript ingestion (Discovery layer)
 youtube-transcript-api>=0.6.2
 

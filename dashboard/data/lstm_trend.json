@@ -1,0 +1,60 @@
+{
+  "generated_at": "2026-08-11T17:43:13+00:00",
+  "kind": "lstm-trend",
+  "horizon_trading_days": 5,
+  "sequence_length_days": 20,
+  "model": "LSTM (1 layer, 32 hidden units, dropout 0.3, PyTorch), sequence of 20 days over the same features as train_ml_trend.py",
+  "validation": {
+    "method": "5-fold time-based expanding-window walk-forward, LSTM (seq_len=20)",
+    "n_folds": 4,
+    "n_test_rows": 905,
+    "accuracy_pct": 27.8,
+    "baseline_class": "Down",
+    "baseline_accuracy_pct": 39.8,
+    "beats_baseline": false,
+    "per_class": {
+      "Down": {
+        "precision_pct": 30.1,
+        "recall_pct": 29.7,
+        "n": 360
+      },
+      "Flat": {
+        "precision_pct": 28.5,
+        "recall_pct": 41.3,
+        "n": 288
+      },
+      "Up": {
+        "precision_pct": 19.5,
+        "recall_pct": 10.1,
+        "n": 257
+      }
+    },
+    "per_fold": [
+      {
+        "test_start": "2024-09-16",
+        "test_end": "2025-03-04",
+        "n_test": 288,
+        "accuracy_pct": 27.4
+      },
+      {
+        "test_start": "2025-03-04",
+        "test_end": "2025-08-26",
+        "n_test": 216,
+        "accuracy_pct": 26.9
+      },
+      {
+        "test_start": "2025-08-26",
+        "test_end": "2026-02-13",
+        "n_test": 375,
+        "accuracy_pct": 27.5
+      },
+      {
+        "test_start": "2026-02-13",
+        "test_end": "2026-08-04",
+        "n_test": 26,
+        "accuracy_pct": 46.2
+      }
+    ]
+  },
+  "disclaimer": "Attempt #5 in an honest series (see train_ml_trend.py docstring for #1-4, all of which also failed to beat baseline). A small LSTM on this sample size is not expected to outperform gradient boosting on the same features \u2014 this was tried for completeness after the user pointed at a reference repo, not because prior evidence suggested it would work. Research/education only."
+}

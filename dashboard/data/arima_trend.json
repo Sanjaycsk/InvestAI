@@ -1,0 +1,678 @@
+{
+  "generated_at": "2026-08-11T16:54:29+00:00",
+  "kind": "arima-trend-15d",
+  "horizon_trading_days": 15,
+  "model": "Per-ticker ARIMA on log(close), order chosen by AIC on the train split",
+  "split": {
+    "train_frac": 0.8,
+    "method": "chronological (train strictly before test)"
+  },
+  "label_thresholds": {
+    "up_pct": 4.0,
+    "down_pct": -4.0
+  },
+  "validation": {
+    "method": "walk-forward over the held-out 20% test period, refit every 15 trading days, forecast 15 days ahead each time",
+    "n_tickers": 26,
+    "n_test_forecasts": 391,
+    "accuracy_pct": 51.9,
+    "baseline_class": "Flat",
+    "baseline_accuracy_pct": 51.9,
+    "beats_baseline": false
+  },
+  "per_ticker": [
+    {
+      "ticker": "RELIANCE",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 75.0,
+      "baseline_accuracy_pct": 75.0,
+      "n": 16
+    },
+    {
+      "ticker": "HDFCBANK",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 43.8,
+      "baseline_accuracy_pct": 43.8,
+      "n": 16
+    },
+    {
+      "ticker": "ICICIBANK",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 62.5,
+      "baseline_accuracy_pct": 62.5,
+      "n": 16
+    },
+    {
+      "ticker": "TCS",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 31.2,
+      "baseline_accuracy_pct": 43.8,
+      "n": 16
+    },
+    {
+      "ticker": "INFY",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 50.0,
+      "baseline_accuracy_pct": 50.0,
+      "n": 16
+    },
+    {
+      "ticker": "BHARTIARTL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 68.8,
+      "baseline_accuracy_pct": 68.8,
+      "n": 16
+    },
+    {
+      "ticker": "ITC",
+      "order": [
+        2,
+        1,
+        2
+      ],
+      "accuracy_pct": 75.0,
+      "baseline_accuracy_pct": 75.0,
+      "n": 16
+    },
+    {
+      "ticker": "HINDUNILVR",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 56.2,
+      "baseline_accuracy_pct": 56.2,
+      "n": 16
+    },
+    {
+      "ticker": "LT",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 56.2,
+      "baseline_accuracy_pct": 56.2,
+      "n": 16
+    },
+    {
+      "ticker": "MARUTI",
+      "order": [
+        1,
+        1,
+        2
+      ],
+      "accuracy_pct": 56.2,
+      "baseline_accuracy_pct": 56.2,
+      "n": 16
+    },
+    {
+      "ticker": "SUNPHARMA",
+      "order": [
+        0,
+        1,
+        1
+      ],
+      "accuracy_pct": 68.8,
+      "baseline_accuracy_pct": 68.8,
+      "n": 16
+    },
+    {
+      "ticker": "TATASTEEL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 56.2,
+      "baseline_accuracy_pct": 56.2,
+      "n": 16
+    },
+    {
+      "ticker": "SBIN",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 43.8,
+      "baseline_accuracy_pct": 43.8,
+      "n": 16
+    },
+    {
+      "ticker": "FEDERALBNK",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 37.5,
+      "baseline_accuracy_pct": 50.0,
+      "n": 16
+    },
+    {
+      "ticker": "SUZLON",
+      "order": [
+        0,
+        1,
+        1
+      ],
+      "accuracy_pct": 37.5,
+      "baseline_accuracy_pct": 50.0,
+      "n": 16
+    },
+    {
+      "ticker": "TATAPOWER",
+      "order": [
+        1,
+        1,
+        2
+      ],
+      "accuracy_pct": 75.0,
+      "baseline_accuracy_pct": 75.0,
+      "n": 16
+    },
+    {
+      "ticker": "WAAREEENER",
+      "order": [
+        2,
+        1,
+        2
+      ],
+      "accuracy_pct": 20.0,
+      "baseline_accuracy_pct": 60.0,
+      "n": 5
+    },
+    {
+      "ticker": "NTPC",
+      "order": [
+        1,
+        1,
+        0
+      ],
+      "accuracy_pct": 62.5,
+      "baseline_accuracy_pct": 62.5,
+      "n": 16
+    },
+    {
+      "ticker": "ADANIENT",
+      "order": [
+        1,
+        1,
+        1
+      ],
+      "accuracy_pct": 50.0,
+      "baseline_accuracy_pct": 50.0,
+      "n": 16
+    },
+    {
+      "ticker": "BEL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 37.5,
+      "baseline_accuracy_pct": 37.5,
+      "n": 16
+    },
+    {
+      "ticker": "BHEL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 56.2,
+      "baseline_accuracy_pct": 56.2,
+      "n": 16
+    },
+    {
+      "ticker": "VEDL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 25.0,
+      "baseline_accuracy_pct": 50.0,
+      "n": 16
+    },
+    {
+      "ticker": "BPCL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 62.5,
+      "baseline_accuracy_pct": 62.5,
+      "n": 16
+    },
+    {
+      "ticker": "GROWWN200",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 100.0,
+      "baseline_accuracy_pct": 100.0,
+      "n": 4
+    },
+    {
+      "ticker": "GOLDBEES",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 31.2,
+      "baseline_accuracy_pct": 50.0,
+      "n": 16
+    },
+    {
+      "ticker": "SILVERBEES",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "accuracy_pct": 21.4,
+      "baseline_accuracy_pct": 50.0,
+      "n": 14
+    }
+  ],
+  "predictions": [
+    {
+      "ticker": "RELIANCE",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -6.75,
+      "ci_high_pct": 7.24,
+      "test_accuracy_pct": 75.0,
+      "test_n": 16
+    },
+    {
+      "ticker": "HDFCBANK",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -6.33,
+      "ci_high_pct": 6.76,
+      "test_accuracy_pct": 43.8,
+      "test_n": 16
+    },
+    {
+      "ticker": "ICICIBANK",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -6.11,
+      "ci_high_pct": 6.51,
+      "test_accuracy_pct": 62.5,
+      "test_n": 16
+    },
+    {
+      "ticker": "TCS",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -6.79,
+      "ci_high_pct": 7.28,
+      "test_accuracy_pct": 31.2,
+      "test_n": 16
+    },
+    {
+      "ticker": "INFY",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -7.75,
+      "ci_high_pct": 8.41,
+      "test_accuracy_pct": 50.0,
+      "test_n": 16
+    },
+    {
+      "ticker": "BHARTIARTL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -6.58,
+      "ci_high_pct": 7.04,
+      "test_accuracy_pct": 68.8,
+      "test_n": 16
+    },
+    {
+      "ticker": "ITC",
+      "order": [
+        2,
+        1,
+        2
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": -0.02,
+      "ci_low_pct": -6.16,
+      "ci_high_pct": 6.52,
+      "test_accuracy_pct": 75.0,
+      "test_n": 16
+    },
+    {
+      "ticker": "HINDUNILVR",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -6.26,
+      "ci_high_pct": 6.67,
+      "test_accuracy_pct": 56.2,
+      "test_n": 16
+    },
+    {
+      "ticker": "LT",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -7.4,
+      "ci_high_pct": 7.99,
+      "test_accuracy_pct": 56.2,
+      "test_n": 16
+    },
+    {
+      "ticker": "MARUTI",
+      "order": [
+        1,
+        1,
+        2
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": -0.04,
+      "ci_low_pct": -7.47,
+      "ci_high_pct": 7.97,
+      "test_accuracy_pct": 56.2,
+      "test_n": 16
+    },
+    {
+      "ticker": "SUNPHARMA",
+      "order": [
+        0,
+        1,
+        1
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.01,
+      "ci_low_pct": -5.75,
+      "ci_high_pct": 6.12,
+      "test_accuracy_pct": 68.8,
+      "test_n": 16
+    },
+    {
+      "ticker": "TATASTEEL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -9.22,
+      "ci_high_pct": 10.16,
+      "test_accuracy_pct": 56.2,
+      "test_n": 16
+    },
+    {
+      "ticker": "SBIN",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -7.47,
+      "ci_high_pct": 8.07,
+      "test_accuracy_pct": 43.8,
+      "test_n": 16
+    },
+    {
+      "ticker": "FEDERALBNK",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -8.29,
+      "ci_high_pct": 9.04,
+      "test_accuracy_pct": 37.5,
+      "test_n": 16
+    },
+    {
+      "ticker": "SUZLON",
+      "order": [
+        0,
+        1,
+        1
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.02,
+      "ci_low_pct": -15.72,
+      "ci_high_pct": 18.7,
+      "test_accuracy_pct": 37.5,
+      "test_n": 16
+    },
+    {
+      "ticker": "TATAPOWER",
+      "order": [
+        1,
+        1,
+        2
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -9.73,
+      "ci_high_pct": 10.78,
+      "test_accuracy_pct": 75.0,
+      "test_n": 16
+    },
+    {
+      "ticker": "WAAREEENER",
+      "order": [
+        2,
+        1,
+        2
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": -0.67,
+      "ci_low_pct": -12.7,
+      "ci_high_pct": 13.03,
+      "test_accuracy_pct": 20.0,
+      "test_n": 5
+    },
+    {
+      "ticker": "NTPC",
+      "order": [
+        1,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.03,
+      "ci_low_pct": -7.25,
+      "ci_high_pct": 7.88,
+      "test_accuracy_pct": 62.5,
+      "test_n": 16
+    },
+    {
+      "ticker": "ADANIENT",
+      "order": [
+        1,
+        1,
+        1
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.02,
+      "ci_low_pct": -14.89,
+      "ci_high_pct": 17.54,
+      "test_accuracy_pct": 50.0,
+      "test_n": 16
+    },
+    {
+      "ticker": "BEL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -9.44,
+      "ci_high_pct": 10.42,
+      "test_accuracy_pct": 37.5,
+      "test_n": 16
+    },
+    {
+      "ticker": "BHEL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -12.33,
+      "ci_high_pct": 14.06,
+      "test_accuracy_pct": 56.2,
+      "test_n": 16
+    },
+    {
+      "ticker": "VEDL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -17.21,
+      "ci_high_pct": 20.78,
+      "test_accuracy_pct": 25.0,
+      "test_n": 16
+    },
+    {
+      "ticker": "BPCL",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -8.6,
+      "ci_high_pct": 9.41,
+      "test_accuracy_pct": 62.5,
+      "test_n": 16
+    },
+    {
+      "ticker": "GROWWN200",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -4.64,
+      "ci_high_pct": 4.86,
+      "test_accuracy_pct": 100.0,
+      "test_n": 4
+    },
+    {
+      "ticker": "GOLDBEES",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -5.58,
+      "ci_high_pct": 5.91,
+      "test_accuracy_pct": 31.2,
+      "test_n": 16
+    },
+    {
+      "ticker": "SILVERBEES",
+      "order": [
+        0,
+        1,
+        0
+      ],
+      "predicted_class": "Flat",
+      "predicted_pct": 0.0,
+      "ci_low_pct": -10.41,
+      "ci_high_pct": 11.62,
+      "test_accuracy_pct": 21.4,
+      "test_n": 14
+    }
+  ],
+  "disclaimer": "Per-ticker ARIMA on price alone (no technical/fundamental features), evaluated on a genuine held-out 20% chronological test split \u2014 this number has NOT been tuned against the test set. 15-trading-day directional forecasting for individual equities is close to a coin flip for almost any legitimate model (weak-form market efficiency); treat any very high accuracy figure as a reason to check for a leak, not as a validated edge. Research/education only, never a price target."
+}

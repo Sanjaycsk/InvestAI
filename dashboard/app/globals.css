@@ -1928,3 +1928,302 @@ details > summary::-webkit-details-marker {
 .debate-line .dl-text {
   line-height: 1.5;
 }
+
+/* Color modifiers for the (previously colorless) consensus-count pill —
+   reused below by the sector board and the date filter. */
+.cns-count.buy {
+  color: var(--green);
+  background: var(--green-dim);
+}
+.cns-count.hold {
+  color: var(--yellow);
+  background: var(--yellow-dim);
+}
+.cns-count.sell {
+  color: var(--red);
+  background: var(--red-dim);
+}
+
+/* ============================================================
+   Personal "what do I do" badge (own-it toggle, per device)
+   ============================================================ */
+.own-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+.own-action {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.own-action strong {
+  font-weight: 700;
+}
+.own-action.pos strong {
+  color: var(--green);
+}
+.own-action.neg strong {
+  color: var(--red);
+}
+.own-action.warn strong {
+  color: var(--yellow);
+}
+
+/* ============================================================
+   Sector board (#4 — group calls by sector)
+   ============================================================ */
+.sector-board {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sector-block {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.sector-block:first-child {
+  border-top: none;
+  padding-top: 2px;
+}
+.sector-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.sector-name {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--text);
+}
+.sector-mood {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.sector-mood.pos {
+  color: var(--green);
+  background: var(--green-dim);
+}
+.sector-mood.neg {
+  color: var(--red);
+  background: var(--red-dim);
+}
+.sector-mood.neutral {
+  color: var(--muted);
+  background: var(--card-2);
+}
+.sector-tickers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sector-tickers li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 4px 8px 4px 10px;
+}
+.sector-tickers .ticker {
+  font-size: 12.5px;
+}
+.sector-tickers .verdict {
+  font-size: 9.5px;
+  padding: 2px 7px;
+}
+
+/* ============================================================
+   Entry-window banner (#3 — 9:15-11:00 buying window)
+   ============================================================ */
+.banner.window-window {
+  background: var(--green-dim);
+  border-color: color-mix(in srgb, var(--green) 40%, transparent);
+}
+.banner.window-window .banner-ico {
+  color: var(--green);
+}
+.banner.window-late {
+  background: var(--yellow-dim);
+  border-color: color-mix(in srgb, var(--yellow) 40%, transparent);
+}
+.banner.window-late .banner-ico {
+  color: var(--yellow);
+}
+.banner.window-before,
+.banner.window-closed {
+  background: var(--card-2);
+  border-color: var(--line-soft);
+}
+.banner.window-before .banner-ico,
+.banner.window-closed .banner-ico {
+  color: var(--muted);
+}
+
+/* ============================================================
+   Report-card mood badge (#6 — 75% accuracy reinforcement)
+   ============================================================ */
+.mood-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 13px;
+  border: 1px solid var(--line-soft);
+  margin-bottom: 14px;
+}
+.mood-badge.pos {
+  background: var(--green-dim);
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+}
+.mood-badge.neg {
+  background: var(--red-dim);
+  border-color: color-mix(in srgb, var(--red) 35%, transparent);
+}
+.mood-ico {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.mood-badge.pos .mood-ico {
+  color: var(--green);
+}
+.mood-badge.neg .mood-ico {
+  color: var(--red);
+}
+.mood-title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+.mood-badge.pos .mood-title {
+  color: var(--green);
+}
+.mood-badge.neg .mood-title {
+  color: var(--red);
+}
+.mood-sub {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   Date filter (#5 — browse the last 7 trading days)
+   ============================================================ */
+.datefilter-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.datefilter-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+  min-width: 52px;
+  padding: 7px 6px;
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+.datefilter-pill:hover {
+  color: var(--text);
+}
+.datefilter-pill.active {
+  color: #fff;
+  background: var(--accent);
+  border-color: transparent;
+}
+.dfp-top {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.dfp-bottom {
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+}
+.datefilter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.datefilter-date {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--text);
+}
+.datefilter-counts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   15-day ML trend panel (#2)
+   ============================================================ */
+.mltrend-reality {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.mltrend-reality.pos {
+  background: var(--green-dim);
+  color: var(--text);
+}
+.mltrend-reality.neg {
+  background: var(--yellow-dim);
+  color: var(--text);
+}
+.mltrend .stock-row {
+  padding: 8px 0;
+}
+
+/* Per-stock "second opinion" chip inside StockDetail */
+.ml-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+}
+.ml-chip-label {
+  font-size: var(--fs-2xs);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
