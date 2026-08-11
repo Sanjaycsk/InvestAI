@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Dashboard, Search } from "./Icons";
 
-// Top-level tabs: today's quick-skim view, and a deep-dive lookup for any
-// one stock (yesterday's call, its own track record, coffee-shop opinions).
-// The old "Coffee Shop" tab was folded into the lookup detail per-stock
-// instead of being its own separate page.
+// Top-level tabs: today's quick-skim view, and "Details" — the stock
+// look-up tool plus everything that isn't a today-only decision (error
+// patterns, yesterday's whole-portfolio recap, how the model works). Keeps
+// the home page a fast skim; this tab is where you go to dig in.
 export default function TabNav({ active }: { active: "home" | "lookup" }) {
   return (
     <nav className="tabnav">
@@ -12,7 +12,7 @@ export default function TabNav({ active }: { active: "home" | "lookup" }) {
         <Dashboard size={16} /> Today
       </Link>
       <Link href="/lookup" className={active === "lookup" ? "active" : ""}>
-        <Search size={16} /> Look up a stock
+        <Search size={16} /> Details
       </Link>
     </nav>
   );

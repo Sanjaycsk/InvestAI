@@ -2,16 +2,15 @@
 
 import { useState } from "react";
 import { type Rec, type CoffeeOpinion, type Dashboard } from "@/lib/notion";
-import { plainify } from "@/lib/plain";
 import StockDetail from "./StockDetail";
-import { PERSONAS, STANCE_CLS } from "./coffeeMeta";
+import PriceChart from "./PriceChart";
+import { PERSONAS, ROLE_LABEL, STANCE_MEANING } from "./coffeeMeta";
 
-// One dropdown to look up ANY of the day's watchlist names, and — since the
-// dedicated Coffee Shop tab and the old "how accurate over time" chart both
-// got folded in here instead of living as separate pages — this is also
-// where the deep-dive detail for a single stock lives: yesterday's call,
-// this name's own track record, and the coffee-shop friends' take on it.
-// Picking a stock keeps the home page itself a quick, uncluttered skim.
+// One dropdown to look up ANY of the day's watchlist names — this is where
+// the deep-dive detail for a single stock lives: yesterday's call, this
+// name's own track record, a price chart, and what different kinds of
+// investors would do. Picking a stock keeps the home page itself a quick,
+// uncluttered skim.
 
 const VERDICT_TAG: Record<string, string> = {
   BUY: "▲ Buy",
@@ -25,12 +24,9 @@ const VERDICT_WORD: Record<string, string> = {
   HOLD: "Hold",
 };
 
-const RUN_LABEL: Record<string, string> = {
-  "Pre-market": "Morning call",
-  Confirm: "After the open",
-  "De-risk": "Before the close",
-};
-const RUN_ORDER = ["Pre-market", "Confirm", "De-risk"];
+// Most-advanced-run-wins: if the day's gone all the way to the 3 PM check,
+// that's the freshest read; otherwise fall back earlier in the day.
+const RUN_PRIORITY = ["De-risk", "Confirm", "Pre-market"];
 
 function signed(n: number | null): string {
   if (n === null) return "—";
@@ -44,12 +40,14 @@ export default function StockLookup({
   tickerStats,
   trackRecordDays,
   coffee,
+  priceHistory,
 }: {
   stocks: Rec[];
   yesterday: Rec[];
   tickerStats: Dashboard["tickerStats"];
   trackRecordDays: number;
   coffee: CoffeeOpinion[];
+  priceHistory: Dashboard["priceHistory"];
 }) {
   const withTicker = stocks.filter((s) => s.ticker);
   const [sel, setSel] = useState<string>("");
@@ -58,8 +56,21 @@ export default function StockLookup({
   const chosen = withTicker.find((s) => s.ticker === sel) ?? null;
   const y = chosen ? yesterday.find((r) => r.ticker === chosen.ticker) ?? null : null;
   const stats = chosen?.ticker ? tickerStats[chosen.ticker] : null;
-  const myCoffee = chosen?.ticker
-    ? coffee.filter((c) => c.ticker === chosen.ticker)
+  const history = chosen?.ticker ? priceHistory[chosen.ticker] ?? [] : [];
+
+  // Plain-language "who'd do what" — the single freshest run for this
+  // ticker, one line per persona, no transcript.
+  const myCoffee = chosen?.ticker ? coffee.filter((c) => c.ticker === chosen.ticker) : [];
+  const latestRun = RUN_PRIORITY.find((run) =>
+    myCoffee.some((c) => (c.run ?? "Pre-market") === run)
+  );
+  const opinionRows = latestRun
+    ? PERSONAS.map((p) => ({
+        p,
+        o: myCoffee.find(
+          (c) => c.persona === p.key && (c.run ?? "Pre-market") === latestRun
+        ),
+      })).filter((x): x is { p: (typeof PERSONAS)[number]; o: CoffeeOpinion } => !!x.o)
     : [];
 
   return (
@@ -133,88 +144,43 @@ export default function StockLookup({
             </div>
           )}
 
-          {/* Coffee-shop friends, folded in per-stock instead of a separate tab */}
-          {myCoffee.length > 0 && (
+          {/* Price over time, with a simple trend read */}
+          {history.length > 0 && (
             <div className="lookup-block">
-              <div className="lookup-block-title">What the coffee-shop friends think</div>
-              {RUN_ORDER.filter((run) =>
-                myCoffee.some((c) => (c.run ?? "Pre-market") === run)
-              ).map((run) => {
-                const rows = myCoffee.filter((c) => (c.run ?? "Pre-market") === run);
-                const transcript = rows.find((c) => c.debate)?.debate ?? null;
-                const lines = transcript
-                  ? transcript.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
-                  : [];
-                return (
-                  <details className="cns" key={run}>
-                    <summary className="cns-head">
-                      <span className="cns-tk">{RUN_LABEL[run] ?? run}</span>
-                      <span className="cns-counts">
-                        {rows.map((r, i) => (
-                          <span
-                            key={i}
-                            className={`cns-count ${STANCE_CLS[r.stance ?? ""] ?? ""}`}
-                          >
-                            {r.stance ?? "—"}
-                          </span>
-                        ))}
-                      </span>
-                      <span className="cns-chev" aria-hidden="true" />
-                    </summary>
-                    <div className="cns-body">
-                      {lines.length > 0 && (
-                        <div className="debate">
-                          {lines.map((ln, i) => {
-                            const m = ln.match(/^([A-Za-z]+)\s*[:–—-]\s*(.*)$/);
-                            const who = m ? m[1] : null;
-                            const emoji = who
-                              ? PERSONAS.find((p) => p.key === who)?.emoji ?? "💬"
-                              : "";
-                            return (
-                              <p className="debate-line" key={i}>
-                                {who && (
-                                  <span className="dl-who">
-                                    {emoji} {who}
-                                  </span>
-                                )}
-                                <span className="dl-text">{plainify(m ? m[2] : ln)}</span>
-                              </p>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <ul className="cns-matrix">
-                        {rows.map((r, i) => {
-                          const p = PERSONAS.find((pp) => pp.key === r.persona);
-                          return (
-                            <li key={i}>
-                              <span className="cm-who">
-                                {p?.emoji ?? "💬"} {r.persona}
-                              </span>
-                              <span
-                                className={`stance sm ${
-                                  r.stance ? STANCE_CLS[r.stance] ?? "" : ""
-                                }`}
-                              >
-                                {r.stance ?? "—"}
-                              </span>
-                              {r.take && <span className="cm-take">{plainify(r.take)}</span>}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </details>
-                );
-              })}
+              <div className="lookup-block-title">Price so far</div>
+              <PriceChart data={history} />
+            </div>
+          )}
+
+          {/* Different kinds of investors, in one line each — plain
+              language, not a conversation. */}
+          {opinionRows.length > 0 && (
+            <div className="lookup-block">
+              <details className="cns-legend">
+                <summary>What would different kinds of investors do?</summary>
+                <ul className="opinion-list">
+                  {opinionRows.map(({ p, o }, i) => (
+                    <li key={i}>
+                      <span className="opinion-who">
+                        {p.emoji} {ROLE_LABEL[p.key] ?? p.key}
+                      </span>{" "}
+                      would: <strong>{o.stance ? STANCE_MEANING[o.stance] ?? o.stance : "—"}</strong>
+                    </li>
+                  ))}
+                </ul>
+                <p className="explain">
+                  Just perspective from six different money mindsets — it never
+                  changes the model&apos;s actual BUY/HOLD/SELL call above.
+                </p>
+              </details>
             </div>
           )}
         </div>
       ) : (
         <p className="allstocks-hint">
           Pick any of the {withTicker.length} names to see what the model
-          thinks, how it did yesterday, its track record, and what the
-          coffee-shop friends say.
+          thinks, how it did yesterday, its track record, a price chart, and
+          what different kinds of investors would do.
         </p>
       )}
     </div>

@@ -11,6 +11,18 @@ export const PERSONAS: { key: string; emoji: string; tag: string }[] = [
   { key: "Diya", emoji: "🎲", tag: "Experimenter — small risky punts" },
 ];
 
+// Very plain, role-based labels for the stock-lookup page — used instead of
+// character names + a debate transcript, per feedback that the conversation
+// format wasn't simple enough. e.g. "A long-term investor would: hold it."
+export const ROLE_LABEL: Record<string, string> = {
+  Vihaan: "A long-term investor",
+  Aarav: "A quick-profit trader",
+  Rohan: "A cautious watcher",
+  Meera: "A steady saver",
+  Neel: "A small-budget saver",
+  Diya: "A risk-taker",
+};
+
 export const STANCE_CLS: Record<string, string> = {
   Buy: "st-buy",
   SIP: "st-sip",
@@ -32,3 +44,7 @@ export const STANCE_INFO: { key: string; meaning: string }[] = [
   { key: "Avoid", meaning: "stay away (or sell if you hold it)" },
   { key: "Punt", meaning: "a small risky gamble for a quick gain" },
 ];
+
+export const STANCE_MEANING: Record<string, string> = Object.fromEntries(
+  STANCE_INFO.map((s) => [s.key, s.meaning])
+);

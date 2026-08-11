@@ -624,6 +624,22 @@ body::before {
   padding-top: 14px;
   border-top: 1px solid var(--line-soft);
 }
+.opinion-list {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.opinion-list li {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text);
+}
+.opinion-who {
+  font-weight: 650;
+}
 .lookup-block-title {
   font-size: var(--fs-xs);
   font-weight: 650;
@@ -814,6 +830,49 @@ body::before {
 }
 .bt-legend .dot.bench {
   background: var(--muted);
+}
+
+/* ---- per-stock price chart (short/long trend lines) ---- */
+.chart-line-short {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.chart-line-long {
+  fill: none;
+  stroke: var(--silver);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.chart-legend {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text);
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.chart-legend .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.chart-legend .dot.strat {
+  background: var(--accent);
+}
+.chart-legend .dot.short {
+  background: var(--green);
+}
+.chart-legend .dot.long {
+  background: var(--silver);
 }
 .bt-note {
   font-size: 11px;

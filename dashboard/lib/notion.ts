@@ -259,12 +259,18 @@ export type Dashboard = {
     marketAlpha: number | null; // strategy return minus the market's return, same days
     marketAlphaDays: number; // how many graded days that comparison covers
     marketAlphaNiftyDays: number; // of those, how many used the REAL Nifty 50 reading (rest use the GROWWN200 proxy)
+    // Every graded call weighted equally (not "average of each day's accuracy%",
+    // which over/under-weights light vs heavy days) — the honest "would my calls
+    // have been right" number, over trackRecordDays.
+    accuracyTrackRecord: number | null;
   };
   // Whole-history hit rate per ticker (not a rolling window — the dashboard's
   // been live since inception, so "last 45 days" and "all time" are close to
   // the same thing; trackRecordDays makes the actual span honest either way).
   tickerStats: Record<string, { correct: number; wrong: number; n: number; hitRate: number }>;
   trackRecordDays: number; // distinct graded trading days behind tickerStats
+  // Ref Price over time per ticker, ascending by date — for the stock-lookup price chart.
+  priceHistory: Record<string, { date: string; refPrice: number }[]>;
   // What to check before trusting today's calls — surfaced from the Daily
   // Review fields that used to exist in Notion but never rendered anywhere.
   errorManagement: {
@@ -602,6 +608,26 @@ export async function getDashboard(): Promise<Dashboard> {
     }
     const trackRecordDays = gradedDates.size;
 
+    // Track-record accuracy: every graded call weighted equally, over the
+    // whole run — different from `accuracy7d`, which averages each day's
+    // accuracy% and so treats a 1-call day the same as a 10-call day.
+    const accuracyTrackRecord = graded.length
+      ? (graded.filter((r) => r.outcome === "Correct").length / graded.length) * 100
+      : null;
+
+    // Price history per ticker (ascending), for the stock-lookup line chart.
+    // Ref Price is already logged daily for every instrument, so this needs
+    // no new data source.
+    const priceHistory: Dashboard["priceHistory"] = {};
+    for (const r of recs) {
+      if (!r.ticker || !r.date || typeof r.refPrice !== "number") continue;
+      const arr = priceHistory[r.ticker] ?? (priceHistory[r.ticker] = []);
+      arr.push({ date: r.date, refPrice: r.refPrice });
+    }
+    for (const ticker of Object.keys(priceHistory)) {
+      priceHistory[ticker].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    }
+
     // Error management: what to check before trusting today's calls, pulled
     // from Daily Review fields that were always in Notion but never rendered
     // anywhere on the dashboard. Split each field on newlines (the routine
@@ -662,9 +688,11 @@ export async function getDashboard(): Promise<Dashboard> {
         marketAlpha,
         marketAlphaDays,
         marketAlphaNiftyDays,
+        accuracyTrackRecord,
       },
       tickerStats,
       trackRecordDays,
+      priceHistory,
       errorManagement,
     };
   } catch (e: any) {
@@ -695,9 +723,11 @@ export async function getDashboard(): Promise<Dashboard> {
         marketAlpha: null,
         marketAlphaDays: 0,
         marketAlphaNiftyDays: 0,
+        accuracyTrackRecord: null,
       },
       tickerStats: {},
       trackRecordDays: 0,
+      priceHistory: {},
       errorManagement: {
         asOfDate: null,
         correctableErrors: [],
