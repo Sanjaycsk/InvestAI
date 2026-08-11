@@ -56,7 +56,39 @@ def _guardrails_ok(rec: Recommendation, live_price: float) -> tuple[bool, str]:
         )
     if db.count_executions_today() >= config.MAX_DAILY_TRADES:
         return False, f"daily trade cap ({config.MAX_DAILY_TRADES}) reached."
+    if _side_for(rec.recommended_action) == "BUY":
+        stops_today = db.count_stop_losses_today()
+        if stops_today >= config.MAX_DAILY_STOP_LOSSES:
+            return False, (
+                f"circuit breaker: {stops_today} stop-loss(es) already fired today "
+                f"(cap {config.MAX_DAILY_STOP_LOSSES}) — no new BUYs until tomorrow."
+            )
     return True, "ok"
+
+
+def check_stop_loss(rec: Recommendation, live_price: float) -> bool:
+    """True if a held BUY/ACCUMULATE idea has breached its stop-loss."""
+    return (
+        rec.stop_loss_price is not None
+        and _side_for(rec.recommended_action) == "BUY"
+        and live_price <= rec.stop_loss_price
+    )
+
+
+def record_stop_loss(rec: Recommendation, live_price: float) -> None:
+    """
+    Log a stop-loss trip to the audit trail (feeds the daily circuit breaker
+    in `_guardrails_ok`). Call this from the position-monitoring loop when
+    `check_stop_loss` is True; actually exiting the position is a separate,
+    explicit SELL recommendation through the normal approval flow — this
+    function only records that the stop fired, it does not place an order.
+    """
+    detail = (
+        f"{rec.ticker}: live ₹{live_price:,.2f} <= stop ₹{rec.stop_loss_price:,.2f} "
+        f"(entry ₹{rec.price_at_analysis:,.2f})."
+    )
+    log.warning("STOP-LOSS: %s", detail)
+    db.log_event("STOPPED_OUT", rec.recommendation_id, detail)
 
 
 def execute_recommendation(

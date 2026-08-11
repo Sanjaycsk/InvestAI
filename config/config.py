@@ -26,6 +26,8 @@ DATA_DIR.mkdir(exist_ok=True)
 ENV_PATH = CONFIG_DIR / ".env"
 CHANNELS_PATH = CONFIG_DIR / "channels.json"
 FEEDS_PATH = CONFIG_DIR / "feeds.json"
+EARNINGS_CALENDAR_PATH = CONFIG_DIR / "earnings_calendar.json"
+SCORE_CALIBRATION_PATH = CONFIG_DIR / "score_calibration.json"
 DB_PATH = DATA_DIR / "state.db"
 
 # Load .env (silently no-ops if the file is absent — defaults still apply).
@@ -93,6 +95,26 @@ BRIGHTDATA_API_KEY = os.getenv("BRIGHTDATA_API_KEY", "")
 MAX_ORDER_VALUE_INR = _as_float(os.getenv("MAX_ORDER_VALUE_INR"), 25_000.0)
 MAX_DAILY_TRADES = _as_int(os.getenv("MAX_DAILY_TRADES"), 5)
 APPROVAL_TTL_MINUTES = _as_int(os.getenv("APPROVAL_TTL_MINUTES"), 30)
+# Per-position stop-loss (independent of the 200-DMA, which is far too
+# lagging to cap a single trade's downside — the audit found the only exit
+# trigger was the SMA cross, letting wrong calls run well past what a stop
+# would have allowed).
+STOP_LOSS_PCT = _as_float(os.getenv("STOP_LOSS_PCT"), 5.0)
+# Circuit breaker: once this many stop-losses fire in a day, no new BUY
+# recommendations are sized above zero for the rest of the session — a bad
+# day for the model shouldn't compound into a bad day for the book.
+MAX_DAILY_STOP_LOSSES = _as_int(os.getenv("MAX_DAILY_STOP_LOSSES"), 3)
+# get_verified_price(): max allowed disagreement between independent price
+# sources, and max age of a single-source quote, before it's rejected as
+# unverified rather than acted on.
+PRICE_TOLERANCE_PCT = _as_float(os.getenv("PRICE_TOLERANCE_PCT"), 3.0)
+PRICE_MAX_STALENESS_DAYS = _as_int(os.getenv("PRICE_MAX_STALENESS_DAYS"), 4)
+# Max rupees willing to LOSE on a single position if its stop-loss fires
+# (not the position's notional — its risk). Position size is derived from
+# this budget, the stop distance, and the calibrated confidence for the
+# score band — see src/analysis/position_sizing.py. Tune to your real
+# capital; this default is a conservative paper-trading placeholder.
+MAX_RISK_PER_TRADE_INR = _as_float(os.getenv("MAX_RISK_PER_TRADE_INR"), 1_000.0)
 
 # ----------------------------------------------------------------------
 # Market / analysis

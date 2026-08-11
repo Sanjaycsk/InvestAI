@@ -1,7 +1,7 @@
 # InvestAI — Self-Grading Stock Research Agent
 
 A multi-run, **autonomous** equity-research agent built on **Claude (Anthropic)**. On
-every trading day it issues a **BUY / HOLD / SELL** verdict on a fixed 24-instrument NSE
+every trading day it issues a **BUY / HOLD / SELL** verdict on a fixed 26-instrument NSE
 watchlist before the open, re-checks that thesis as the day plays out, and **grades its
 own previous calls against what actually happened** — with every decision logged and
 auditable.
@@ -23,7 +23,7 @@ The rhythm is **anticipate → confirm → de-risk**:
 
 | Run | Time | What it does |
 | --- | --- | --- |
-| **1 · Pre-market** | 08:30 | Full analysis. Grades yesterday, learns, then scores all 24 and logs today's **BUY/HOLD/SELL**. This is the **verdict of record**. |
+| **1 · Pre-market** | 08:30 | Full analysis. Grades yesterday, learns, then scores all 26 and logs today's **BUY/HOLD/SELL**. This is the **verdict of record**. |
 | **2 · Confirm** | 10:00 | Light delta-check ~30 min after the open: does the morning thesis still hold? Folds in a friend's Notion notes. Annotates only. |
 | **3 · De-risk** | 15:00 | Light check ~30 min before the close: exit/trim only a position whose thesis has **materially broken**, so an overnight gap can't hurt. |
 
@@ -37,11 +37,19 @@ own intraday annotations. That keeps the headline accuracy honest:
 
 ### Run 1, in four steps
 1. **Review & grade yesterday** — read each pending call's actual close, mark it
-   Correct/Wrong, compute accuracy % and a self-rating /100, and grade any prior-day
-   de-risk exits into *management alpha*.
-2. **Learn** — read recent daily reviews and apply their *correctable-error* lessons as
-   standing rules for today (genuine market-driven misses are left alone).
-3. **Analyze today** — score six factors per instrument, weighted by instrument type.
+   Correct/Wrong, compute accuracy % and a self-rating /100, grade any prior-day de-risk
+   exits into *management alpha*, and log the real Nifty 50 move for the day alongside it
+   (so accuracy can be checked against the market, not just against zero).
+2. **Learn** — read recent daily reviews and apply their lessons as standing rules for
+   today. Each lesson is tagged to the ticker it's about, so a name with repeat mistakes
+   gets flagged specifically instead of being lost in one generic pool (genuine
+   market-driven misses are left alone, and the standing rule set is capped and
+   consolidated once it gets too long).
+3. **Analyze today** — first reads the overall market regime (bullish / bearish /
+   sideways) and adjusts the playbook accordingly, then scores six factors per
+   instrument, weighted by instrument type. A boundary-case call (near a category
+   cutoff, or in a historically overconfident band) gets a quick bull-vs-bear
+   self-check before the score is finalized.
 4. **Decide & log** — map the composite score to a category and verdict, write it (with
    per-factor reasoning) to the Notion audit database, and freeze it for the day.
 
@@ -58,7 +66,8 @@ Alongside each run, six recurring investor **characters** debate the day's BUY s
 like friends in a coffee shop — and each records what *they* personally would do. They
 revisit the same shortlist three times a day (pre-market, after the open, before the
 close), so you can watch opinions shift. It's **perspective only — it never changes the
-verdict.**
+verdict.** On the dashboard this now shows up inside each stock's own lookup detail
+(pick the stock, then see what the friends think of it) rather than as a separate tab.
 
 🧓 Vihaan (buys quality, holds for years) · ⚡ Aarav (rides short-term momentum) ·
 👀 Rohan (waits for a dip) · 💼 Meera (safe, set-and-forget SIPs) ·
@@ -93,13 +102,17 @@ See [`AGENT.md`](AGENT.md) for every routine ID, schema, and the exact wiring.
 
 ---
 
-## The 24 instruments (fixed universe, NSE)
+## The 26 instruments (fixed universe, NSE)
 
-**Equities (21):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
+**Equities (23):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
 HINDUNILVR, LT, MARUTI, SUNPHARMA, TATASTEEL, SBIN, FEDERALBNK, SUZLON, TATAPOWER,
-WAAREEENER, NTPC, ADANIENT, BEL, BHEL
+WAAREEENER, NTPC, ADANIENT, BEL, BHEL, VEDL, BPCL
 **Index ETF (1):** GROWWN200 (Groww Nifty 200 ETF — market proxy)
 **Commodity ETFs (2):** GOLDBEES (Gold), SILVERBEES (Silver)
+
+The dashboard's "Beating the market?" panel compares paper performance against the
+**real Nifty 50 index** (`benchmarks.NIFTY50` in the price feed) where it's been logged,
+falling back to GROWWN200 (a Nifty 200 ETF, also in the 26) on older days.
 
 ---
 
@@ -112,8 +125,10 @@ WAAREEENER, NTPC, ADANIENT, BEL, BHEL
   accuracy number can't be quietly rewritten with hindsight.
 - **Fully auditable** — each recommendation is stored with its reasoning, sources, and a
   timestamp; nothing is ephemeral.
-- **Learns from mistakes** — errors are classified (fixable vs market) and fixable ones
-  become rules it applies the next day.
+- **Learns from mistakes** — errors are classified (fixable vs market), tagged to the
+  ticker they're about, and fixable ones become standing rules applied the next day.
+- **Checked against the market, not just itself** — paper performance is compared to the
+  real Nifty 50, so "accuracy" can't just mean "the whole market went up that day."
 - **No black box** — the agents' exact instructions are version-controlled here.
 - **Human-in-the-loop** — it only suggests; a person decides. It never auto-trades.
 
@@ -144,6 +159,19 @@ config/  src/  scripts/  tests/   original local Python toolkit (200-DMA, RSS,
 
 ## Status
 
-A **45-day evaluation** of the agent's accuracy is underway. Telegram delivery of the
-daily brief is deferred; results land in the Notion audit databases, the dashboard, and
-each routine's run history.
+The agent has been live for **45+ days**; the dashboard's stock-lookup tab now shows each
+name's own track record over that whole run, not just the system-wide number. Telegram
+delivery of the daily brief is deferred; results land in the Notion audit databases, the
+dashboard, and each routine's run history.
+
+**2026-08-11 v2** — a round of changes based on live feedback and a look at
+[TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents) (see
+`AGENT.md` for the detailed rationale of what did/didn't transfer):
+- Real Nifty 50 benchmark comparison (was GROWWN200-proxy only)
+- Market-regime awareness (bullish/bearish/sideways) feeding into Step 2
+- Ticker-tagged lesson memory + a deterministic cap, replacing an unbounded, generic
+  lessons list
+- A boundary-case bull/bear self-check before committing a close-call score
+- Dashboard: Coffee Shop folded into the per-stock lookup instead of its own tab, a new
+  **Error Management** panel surfacing the model's own logged mistakes, and a
+  **Beating the market?** panel replacing the old self-grading accuracy chart

@@ -4,7 +4,7 @@
   --card: #131825;
   --card-2: #1a2030;
   --line: #273043;
-  --line-soft: rgba(255, 255, 255, 0.055);
+  --line-soft: rgba(255, 255, 255, 0.085);
   --text: #eef1f8;
   --muted: #99a4be;
   --green: #34d399;
@@ -18,11 +18,10 @@
   --accent-dim: rgba(106, 168, 255, 0.14);
   --silver: #c2cad9;
 
-  /* layered, soft shadows (shadows.brumm.af style) */
-  --shadow: 0 1px 1px rgba(0, 0, 0, 0.25), 0 4px 10px -6px rgba(0, 0, 0, 0.55),
-    0 14px 34px -20px rgba(0, 0, 0, 0.7);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --radius: 18px;
+  /* calm minimal: flat surfaces; hairline borders carry separation */
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-sm: none;
+  --radius: 14px;
 
   /* modular type scale (≈1.2 minor third, base 15px) */
   --fs-2xs: 10px;
@@ -58,10 +57,21 @@ body {
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
   min-height: 100dvh;
+  /* soft ambient colour so the frosted-glass surfaces have something to pick up */
   background: radial-gradient(
-      1000px 440px at 50% -160px,
-      rgba(106, 168, 255, 0.1),
-      transparent 70%
+      760px 420px at 8% -6%,
+      rgba(106, 168, 255, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      720px 460px at 102% 4%,
+      rgba(155, 123, 255, 0.11),
+      transparent 58%
+    ),
+    radial-gradient(
+      820px 560px at 50% 116%,
+      rgba(52, 211, 153, 0.07),
+      transparent 60%
     ),
     var(--bg);
   background-attachment: fixed;
@@ -78,6 +88,47 @@ body {
   * {
     transition: none !important;
     animation: none !important;
+  }
+}
+
+/* ---- ambient animated background ----
+   A slow-drifting aurora that sits behind all content so the page no longer
+   feels flat. Transform/opacity only (GPU-friendly), blurred so there are no
+   hard edges, pointer-events off. The global reduced-motion rule above freezes
+   it automatically; the static body gradient still carries the colour. */
+body {
+  position: relative;
+  z-index: 0;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: -25% -12% -25% -12%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+      36% 32% at 20% 24%,
+      rgba(106, 168, 255, 0.16),
+      transparent 62%
+    ),
+    radial-gradient(32% 30% at 82% 30%, rgba(155, 123, 255, 0.14), transparent 60%),
+    radial-gradient(40% 36% at 62% 84%, rgba(52, 211, 153, 0.1), transparent 62%);
+  filter: blur(26px) saturate(1.05);
+  will-change: transform, opacity;
+  animation: aurora-drift 28s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(2.4%, -2%, 0) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-2%, 2.4%, 0) scale(1.03);
+    opacity: 0.8;
   }
 }
 
@@ -170,9 +221,9 @@ body {
 .kpi {
   background: var(--card);
   border: 1px solid var(--line-soft);
-  border-radius: 15px;
+  border-radius: 13px;
   padding: 14px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 .kpi-label {
   font-size: var(--fs-2xs);
@@ -213,8 +264,8 @@ body {
   border: 1px solid var(--line-soft);
   border-radius: var(--radius);
   padding: 16px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  box-shadow: none;
 }
 .card-head {
   display: flex;
@@ -330,8 +381,8 @@ body {
   padding: 4px;
   background: var(--card);
   border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 12px;
+  box-shadow: none;
 }
 .tabnav a {
   flex: 1;
@@ -353,12 +404,7 @@ body {
 }
 .tabnav a.active {
   color: #fff;
-  background: linear-gradient(
-    180deg,
-    var(--accent),
-    color-mix(in srgb, var(--accent) 80%, #000)
-  );
-  box-shadow: 0 6px 16px -8px var(--accent);
+  background: var(--accent);
 }
 /* ---- coffee-shop panel ---- */
 .coffee-scroll {
@@ -543,6 +589,48 @@ body {
 }
 .yday-sub.bad {
   color: var(--red);
+}
+.err-list {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.err-list li {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text);
+  padding-left: 14px;
+  position: relative;
+}
+.err-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+.err-list.muted-list li {
+  color: var(--muted);
+}
+.lookup-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+.lookup-block-title {
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--silver);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
 }
 .stock-main {
   display: flex;
@@ -1089,11 +1177,7 @@ details > summary::-webkit-details-marker {
   flex-shrink: 0;
 }
 .switch-track.on {
-  background: linear-gradient(
-    180deg,
-    var(--accent),
-    color-mix(in srgb, var(--accent) 80%, #000)
-  );
+  background: var(--accent);
   border-color: transparent;
 }
 .switch-thumb {
@@ -1122,4 +1206,666 @@ details > summary::-webkit-details-marker {
 }
 .list.compact .stock-row {
   padding: 9px 0;
+}
+
+/* ================================================================
+   GROUPING + COLLAPSIBLE SECTIONS (redesign)
+   ================================================================ */
+
+/* ---- group eyebrow (TIER label between sections) ---- */
+.group-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 2px 10px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+.group-eyebrow:first-of-type {
+  margin-top: 6px;
+}
+.group-eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line-soft);
+}
+
+/* ---- accordion section (tap header to open/close) ---- */
+.acc {
+  padding: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.acc.open {
+  box-shadow: var(--shadow);
+}
+.acc-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+.acc-head:hover {
+  background: color-mix(in srgb, var(--card-2) 50%, transparent);
+}
+.acc-head:active {
+  background: var(--card-2);
+}
+.acc-head-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.acc-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.acc-title.buy {
+  color: var(--green);
+}
+.acc-title.sell {
+  color: var(--red);
+}
+.acc-title.hold-h {
+  color: var(--yellow);
+}
+.acc-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 23px;
+  height: 21px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+}
+.acc-count.buy {
+  color: var(--green);
+  background: var(--green-dim);
+  border-color: transparent;
+}
+.acc-count.sell {
+  color: var(--red);
+  background: var(--red-dim);
+  border-color: transparent;
+}
+.acc-count.hold {
+  color: var(--yellow);
+  background: var(--yellow-dim);
+  border-color: transparent;
+}
+.acc-summary {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.acc-hint {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.acc-chev {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.acc.open .acc-chev {
+  transform: rotate(180deg);
+}
+/* grid-template-rows 0fr→1fr gives a smooth height animation with no JS math */
+.acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.acc.open .acc-panel {
+  grid-template-rows: 1fr;
+}
+.acc-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 16px 16px;
+}
+
+/* ---- KPI hero (the headline P&L number) ---- */
+.kpi-hero {
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 13px;
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: none;
+}
+.kpi-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.kpi-hero-val {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 6px 0 2px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-hero-val.pos {
+  color: var(--green);
+}
+.kpi-hero-val.neg {
+  color: var(--red);
+}
+.kpi-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--yellow);
+  background: var(--yellow-dim);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+.kpi-streak .flame {
+  color: var(--yellow);
+}
+
+/* sentiment badge moved into the accordion body */
+.sent-badge-row {
+  margin-bottom: 4px;
+}
+
+/* ================================================================
+   COFFEE SHOP (redesign: run selector + consensus rows)
+   ================================================================ */
+
+/* ---- run selector (segmented) ---- */
+.run-seg {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 4px;
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  box-shadow: none;
+}
+.run-seg button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 6px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.run-seg button:hover {
+  color: var(--text);
+}
+.run-seg button.active {
+  color: #fff;
+  background: var(--accent);
+}
+.run-seg-label {
+  font-size: var(--fs-md);
+  font-weight: 650;
+}
+.run-seg-time {
+  font-size: var(--fs-2xs);
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- consensus rows (one per ticker, no horizontal scroll) ---- */
+.consensus-card {
+  padding: 6px 8px;
+}
+.cns {
+  border-top: 1px solid var(--line);
+}
+.cns:first-child {
+  border-top: none;
+}
+.cns-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.cns-head::-webkit-details-marker {
+  display: none;
+}
+.cns-tk {
+  font-weight: 700;
+  font-size: var(--fs-base);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+/* consensus in words: "4 Buy · 1 Hold · 1 Avoid" (colour reinforces, never alone) */
+.cns-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.cns-count {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 26%, transparent);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cns-chev {
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.cns[open] .cns-chev {
+  transform: rotate(-135deg);
+}
+.cns-body {
+  padding: 2px 8px 12px;
+}
+/* per-stock matrix: friend | stance word | their take (wraps below) */
+.cns-matrix {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+.cns-matrix li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.cns-matrix li:first-child {
+  border-top: none;
+}
+.cm-who {
+  font-weight: 650;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+.cns-matrix .stance {
+  justify-self: end;
+}
+.cm-take {
+  grid-column: 1 / -1;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ---- coffee: "what the words mean" legend ---- */
+.cns-legend > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--accent);
+}
+.cns-legend > summary::-webkit-details-marker {
+  display: none;
+}
+.cns-legend > summary::before {
+  content: "▸ ";
+  color: var(--muted);
+}
+.cns-legend[open] > summary::before {
+  content: "▾ ";
+}
+.key-block {
+  margin-top: 14px;
+}
+.key-h {
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.key-row {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  padding: 3px 0;
+}
+.key-row .stance {
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+}
+.key-friend {
+  flex-shrink: 0;
+  min-width: 96px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+/* ================================================================
+   GLASSMORPHISM — a subtle frosted layer over the calm-minimal base.
+   Guarded by @supports so unsupported browsers keep the opaque cards.
+   ================================================================ */
+@supports (
+  (backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))
+) {
+  .card,
+  .kpi,
+  .kpi-hero,
+  .tabnav,
+  .run-seg {
+    background: rgba(255, 255, 255, 0.055);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* a faint top-edge highlight reads as a light source catching the glass */
+  .card,
+  .kpi,
+  .kpi-hero {
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  }
+  .acc.open {
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), var(--shadow);
+  }
+
+  /* keep nested blocks opaque so glass never stacks on glass (stays legible) */
+  .money-card,
+  .bt-stat {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* ============================================================
+   Stock-row drill-down (tap a ticker to see the full breakdown)
+   ============================================================ */
+.srow {
+  width: 100%;
+}
+.srow > summary {
+  list-style: none;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.18s ease;
+  outline-offset: 2px;
+}
+.srow > summary::-webkit-details-marker {
+  display: none;
+}
+.srow > summary::marker {
+  content: "";
+}
+.srow > summary:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+/* chevron mirrors the coffee card's affordance so the gesture is learnable */
+.srow-chev {
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+.srow[open] .srow-chev {
+  transform: rotate(-135deg);
+}
+.srow-body {
+  margin-top: 9px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  animation: srow-reveal 0.22s ease;
+}
+@keyframes srow-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- StockDetail: the factor breakdown ---- */
+.sd {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sd-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.sd-verdict {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+.sd-verdict.pos {
+  color: var(--green);
+}
+.sd-verdict.neg {
+  color: var(--red);
+}
+.sd-verdict.warn {
+  color: var(--yellow);
+}
+.sd-chip {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.sd-chip.pos {
+  color: var(--green);
+}
+.sd-chip.neg {
+  color: var(--red);
+}
+.sd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.sd-meta b {
+  color: var(--text);
+  font-weight: 650;
+}
+.sd-conf {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.sd-conf-bar {
+  width: 54px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--card-2);
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+}
+.sd-conf-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sd-factors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sd-factors li {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+.sd-flabel {
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--silver);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.sd-ftext {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text);
+}
+.sd-empty {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin: 0;
+}
+@media (max-width: 380px) {
+  .sd-factors li {
+    grid-template-columns: 1fr;
+    gap: 1px;
+  }
+}
+
+/* ============================================================
+   "Look up any stock" dropdown browser
+   ============================================================ */
+.allstocks-card {
+  padding: 14px;
+}
+.allstocks-label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.allstocks-select-wrap {
+  position: relative;
+}
+.allstocks-select {
+  width: 100%;
+  min-height: 46px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 40px 0 14px;
+  font-size: var(--fs-base);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.allstocks-select:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+.allstocks-select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+  outline: none;
+}
+.allstocks-chev {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+.allstocks-hint {
+  margin: 10px 2px 0;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.allstocks-detail {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.015);
+  animation: srow-reveal 0.24s ease;
+}
+.allstocks-detail-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---- coffee: keep each friend's take tight and readable ---- */
+.cm-take {
+  max-width: 62ch;
+}
+.debate-line .dl-text {
+  line-height: 1.5;
 }

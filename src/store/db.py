@@ -127,3 +127,17 @@ def count_executions_today() -> int:
             (start,),
         ).fetchone()
     return int(row["n"]) if row else 0
+
+
+def count_stop_losses_today() -> int:
+    """Stop-losses fired since UTC midnight — feeds the daily circuit breaker."""
+    start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    ).isoformat()
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS n FROM audit_log "
+            "WHERE event = 'STOPPED_OUT' AND ts >= ?",
+            (start,),
+        ).fetchone()
+    return int(row["n"]) if row else 0

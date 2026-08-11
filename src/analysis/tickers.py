@@ -57,6 +57,7 @@ TICKER_ALIASES: dict[str, list[str]] = {
     "GRASIM": ["grasim"],
     "HINDALCO": ["hindalco"],
     "VEDL": ["vedanta", "vedl"],
+    "BPCL": ["bpcl", "bharat petroleum", "bharath petroleum"],
     "DLF": ["dlf"],
     "PIDILITIND": ["pidilite", "fevicol"],
 }
@@ -108,6 +109,7 @@ COMPANY_NAMES: dict[str, str] = {
     "GRASIM": "Grasim Industries Ltd",
     "HINDALCO": "Hindalco Industries Ltd",
     "VEDL": "Vedanta Ltd",
+    "BPCL": "Bharat Petroleum Corporation Ltd",
     "DLF": "DLF Ltd",
     "PIDILITIND": "Pidilite Industries Ltd",
 }

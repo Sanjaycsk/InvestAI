@@ -1,0 +1,31 @@
+{
+  "_comment": "Empirical calibration of Composite Score -> actual historical hit rate, fit from the 733 graded Recommendations rows in the live Notion 'Recommendations' database, 2026-06-17 to 2026-07-31. This is the answer to 'can we use ML/prediction models': a full predictive model on ~730 rows across 45 days would overfit badly, but a simple empirical calibration table is exactly the right amount of model for this much data, and it is honest about where it's thin. Refresh quarterly via calibration.refit_from_records() as more graded data accumulates — see src/analysis/calibration.py.",
+  "fit_window": {"start": "2026-06-17", "end": "2026-07-31", "n_total": 733},
+  "buckets": [
+    {
+      "score_min": 80, "score_max": 100, "n": 5, "correct": 1, "wrong": 4,
+      "empirical_hit_rate": 0.20, "avg_actual_move_pct": -6.91,
+      "note": "n=5 — too small to trust on its own; 1 of 5 rows (HDFCBANK 2026-07-14) is a known stale-ref-price data bug, not a real -55.8% move. Treat this band as UNCALIBRATED until re-fit on clean data; do not size up on a raw 'Strong Buy' label yet."
+    },
+    {
+      "score_min": 70, "score_max": 80, "n": 35, "correct": 16, "wrong": 19,
+      "empirical_hit_rate": 0.457, "avg_actual_move_pct": -1.51,
+      "note": "Below coin-flip and net-negative average move despite being the 2nd-highest score band — do not scale position size up in this band until re-fit."
+    },
+    {
+      "score_min": 60, "score_max": 70, "n": 224, "correct": 175, "wrong": 49,
+      "empirical_hit_rate": 0.781, "avg_actual_move_pct": -0.24,
+      "note": "Best-calibrated, highest-volume band — the composite score genuinely works here."
+    },
+    {
+      "score_min": 45, "score_max": 60, "n": 363, "correct": 255, "wrong": 108,
+      "empirical_hit_rate": 0.702, "avg_actual_move_pct": 3.89,
+      "note": "Largest sample, solid hit rate."
+    },
+    {
+      "score_min": 0, "score_max": 45, "n": 90, "correct": 49, "wrong": 41,
+      "empirical_hit_rate": 0.544, "avg_actual_move_pct": 0.37,
+      "note": "Near coin-flip for the 'Avoid/Sell' band, and the average move was POSITIVE — stocks flagged Avoid/Sell did not, on average, actually decline. Weakest band besides Strong Buy."
+    }
+  ]
+}

@@ -54,6 +54,18 @@ const pText = (p: any) =>
 const pTitle = (p: any) =>
   (p?.title ?? []).map((t: any) => t.plain_text).join("") || null;
 
+// The agent is supposed to score 0-100, but on some days it logs on a 0-10
+// scale instead (e.g. a BUY at 7.05 instead of 70.5), which then rendered as
+// an alarming "confidence 7/100" next to a Buy verdict. Normalise any 0-10
+// value up to the 0-100 scale so the number always matches the Category bands
+// (Strong Buy >80, Buy 70-80, Hold 45-60, Sell <45). The real fix is in the
+// routine prompt (enforce integer 0-100); this keeps old + stray rows sane.
+const pScore = (p: any): number | null => {
+  const n = pNumber(p);
+  if (n === null) return null;
+  return n > 0 && n <= 10 ? Math.round(n * 10) : Math.round(n);
+};
+
 // ---- typed shapes ----
 export type Rec = {
   ticker: string | null;
@@ -68,6 +80,7 @@ export type Rec = {
   actualMove: number | null;
   rationale: string | null;
   why: string | null; // one-sentence reason, derived from the driving factor
+  factors: { label: string; text: string }[]; // per-factor notes for the drill-down
   // ---- intraday runs (Run 2 confirm @10:00, Run 3 de-risk @15:00) ----
   run2Status: string | null; // Intact | Weakening | Broken
   run2Action: string | null; // None | Watch
@@ -81,6 +94,16 @@ export type Rec = {
   mgmtSaved: number | null; // Exit Price − actual close (graded next morning)
 };
 
+// Plain-English labels for the six scoring factors, in display order.
+const FACTOR_LABELS: [string, string][] = [
+  ["Fundamental", "Business health"],
+  ["Technical", "Price trend"],
+  ["Valuation", "Is it cheap or pricey"],
+  ["Macro", "Big-picture / economy"],
+  ["Sentiment", "What people are saying"],
+  ["Risk", "What could go wrong"],
+];
+
 // Pick the single most decision-relevant one-liner for "why this call".
 function deriveWhy(pr: any): string | null {
   const order = ["Technical", "Macro", "Fundamental", "Sentiment", "Valuation", "Risk"];
@@ -89,6 +112,17 @@ function deriveWhy(pr: any): string | null {
     if (t && !/^n\/a/i.test(t.trim())) return t.trim();
   }
   return null;
+}
+
+// The full per-factor breakdown for the stock-detail drill-down. Skips factors
+// the agent marked N/A (index / commodity) and any that are empty.
+function buildFactors(pr: any): { label: string; text: string }[] {
+  const out: { label: string; text: string }[] = [];
+  for (const [key, label] of FACTOR_LABELS) {
+    const t = pText(pr[key]);
+    if (t && t.trim() && !/^n\/a/i.test(t.trim())) out.push({ label, text: t.trim() });
+  }
+  return out;
 }
 
 export type Review = {
@@ -100,8 +134,16 @@ export type Review = {
   selfRating: number | null;
   summary: string | null;
   lessons: string | null;
+  correctableErrors: string | null; // analysis mistakes the model could have avoided
+  marketDrivenMisses: string | null; // sound calls the market moved against unforeseeably
   mgmtAlpha: number | null; // ₹ saved/lost by Run 3 de-risk exits that day
   exitsCount: number | null; // how many Run 3 exits/trims fired
+  // Real NIFTY 50 benchmark reading for the day (added 2026-08-11 — needs the
+  // "Nifty Close" / "Nifty Move %" columns added to Daily Review in Notion and
+  // the live prompt updated to fill them; null on every row until both happen,
+  // in which case the dashboard falls back to the GROWWN200 proxy).
+  niftyClose: number | null;
+  niftyMovePct: number | null;
 };
 
 function mapRec(page: any): Rec {
@@ -112,13 +154,14 @@ function mapRec(page: any): Rec {
     date: pDate(pr["Date"]),
     verdict: pSelect(pr["Verdict"]),
     category: pSelect(pr["Category"]),
-    compositeScore: pNumber(pr["Composite Score"]),
+    compositeScore: pScore(pr["Composite Score"]),
     refPrice: pNumber(pr["Ref Price"]),
     expectedDirection: pSelect(pr["Expected Direction"]),
     outcome: pSelect(pr["Outcome"]),
     actualMove: pNumber(pr["Actual Move %"]),
     rationale: pTitle(pr["Entry"]),
     why: deriveWhy(pr),
+    factors: buildFactors(pr),
     run2Status: pSelect(pr["Run2 Status"]),
     run2Action: pSelect(pr["Run2 Action"]),
     run2Note: pText(pr["Run2 Note"]),
@@ -143,8 +186,12 @@ function mapReview(page: any): Review {
     selfRating: pNumber(pr["Self Rating"]),
     summary: pText(pr["Summary"]),
     lessons: pText(pr["Lessons"]),
+    correctableErrors: pText(pr["Correctable Errors"]),
+    marketDrivenMisses: pText(pr["Market-Driven Misses"]),
     mgmtAlpha: pNumber(pr["Mgmt Alpha"]),
     exitsCount: pNumber(pr["Exits Count"]),
+    niftyClose: pNumber(pr["Nifty Close"]),
+    niftyMovePct: pNumber(pr["Nifty Move %"]),
   };
 }
 
@@ -188,6 +235,7 @@ export type MarketSentiment = {
 export type Dashboard = {
   latestDate: string | null;
   prevDate: string | null;
+  today: Rec[]; // every instrument for the latest day (for the "all stocks" browser)
   todayBuys: Rec[];
   todaySells: Rec[];
   todayHolds: Rec[];
@@ -207,6 +255,23 @@ export type Dashboard = {
     bestStock: { ticker: string; hitRate: number; n: number } | null;
     correctStreak: number; // consecutive latest reviews with accuracy >= 50
     gradedCount: number;
+    dataErrors: number; // graded rows dropped from P&L as implausible (bad Ref Price)
+    marketAlpha: number | null; // strategy return minus the market's return, same days
+    marketAlphaDays: number; // how many graded days that comparison covers
+    marketAlphaNiftyDays: number; // of those, how many used the REAL Nifty 50 reading (rest use the GROWWN200 proxy)
+  };
+  // Whole-history hit rate per ticker (not a rolling window — the dashboard's
+  // been live since inception, so "last 45 days" and "all time" are close to
+  // the same thing; trackRecordDays makes the actual span honest either way).
+  tickerStats: Record<string, { correct: number; wrong: number; n: number; hitRate: number }>;
+  trackRecordDays: number; // distinct graded trading days behind tickerStats
+  // What to check before trusting today's calls — surfaced from the Daily
+  // Review fields that used to exist in Notion but never rendered anywhere.
+  errorManagement: {
+    asOfDate: string | null;
+    correctableErrors: string[]; // yesterday's analysis mistakes, one per line
+    marketDrivenMisses: string[]; // yesterday's sound-call-but-market-moved misses
+    standingLessons: string[]; // the model's current running rule set
   };
   error?: string;
 };
@@ -384,19 +449,111 @@ export async function getDashboard(): Promise<Dashboard> {
     );
     const selfRating = latestReview?.selfRating ?? null;
 
-    // Paper strategy P&L: sum graded moves, long on BUY, short on SELL.
+    // Paper strategy P&L, expressed as a REAL return.
+    //
+    // The old version summed every graded call's Actual Move % into one running
+    // total. That is not a return: it grows without bound as more calls are
+    // graded, and a handful of bad-data rows (the agent occasionally scrapes a
+    // wrong Ref Price from the web, e.g. a GOLDBEES row logged at ₹68 instead of
+    // ₹117 → a fake +72% move) dragged the headline to an impossible -115% on a
+    // long-only paper book. Two fixes:
+    //   1. Drop rows whose Actual Move % is physically implausible for a single
+    //      day — these are data errors, not real moves — and count them so the
+    //      UI can flag that the underlying data needs cleaning.
+    //   2. Treat each day as an equal-weight book (long every BUY, short every
+    //      SELL, HOLD flat) and COMPOUND the daily returns, exactly like the
+    //      backtest's equity curve. This is bounded and comparable over time.
     const graded = recs.filter(
       (r) => r.outcome === "Correct" || r.outcome === "Wrong"
     );
-    let strategyPnl: number | null = null;
     const movers = graded.filter((r) => typeof r.actualMove === "number");
-    if (movers.length) {
-      strategyPnl = movers.reduce((sum, r) => {
+    const MAX_PLAUSIBLE_DAILY_MOVE = 20; // % — beyond this is a bad Ref Price, not a real day
+    const dataErrors = movers.filter(
+      (r) => Math.abs(r.actualMove as number) > MAX_PLAUSIBLE_DAILY_MOVE
+    ).length;
+    const clean = movers.filter(
+      (r) => Math.abs(r.actualMove as number) <= MAX_PLAUSIBLE_DAILY_MOVE
+    );
+
+    let strategyPnl: number | null = null;
+    if (clean.length) {
+      const byDay = new Map<string, number[]>();
+      for (const r of clean) {
         const m = r.actualMove as number;
-        if (r.verdict === "SELL") return sum - m;
-        if (r.verdict === "BUY") return sum + m;
-        return sum; // HOLD contributes nothing
-      }, 0);
+        const dayRet =
+          r.verdict === "SELL" ? -m : r.verdict === "BUY" ? m : null; // HOLD flat
+        if (dayRet === null || !r.date) continue;
+        const bucket = byDay.get(r.date) ?? [];
+        bucket.push(dayRet / 100);
+        byDay.set(r.date, bucket);
+      }
+      let equity = 1;
+      for (const day of [...byDay.keys()].sort()) {
+        const rets = byDay.get(day)!;
+        const eqWeight = rets.reduce((a, b) => a + b, 0) / rets.length;
+        equity *= 1 + eqWeight;
+      }
+      strategyPnl = (equity - 1) * 100;
+    }
+
+    // Market alpha: is the paper strategy actually beating the market, or just
+    // riding a broad rally? Every call has so far been graded on absolute move
+    // only ("+0.8% on a BUY = Correct") even on a day the whole market rose 2% —
+    // that's not stock-picking skill, that's beta.
+    //
+    // Prefer the REAL Nifty 50 reading (Daily Review's "Nifty Move %" — added
+    // 2026-08-11, requires that Notion column + a live-prompt update, so it's
+    // null until both land) over the GROWWN200 (Nifty 200 ETF) proxy, which is
+    // already one of the 26 tracked instruments and needs no schema change —
+    // used as the fallback so this comparison works today and upgrades itself
+    // automatically once real Nifty data starts flowing in.
+    const niftyByDate = new Map<string, number>();
+    for (const r of reviews) {
+      if (r.date && typeof r.niftyMovePct === "number") {
+        niftyByDate.set(r.date, r.niftyMovePct);
+      }
+    }
+    const growwn200ByDate = new Map<string, number>();
+    for (const r of recs) {
+      if (
+        r.ticker === "GROWWN200" &&
+        r.date &&
+        typeof r.actualMove === "number" &&
+        Math.abs(r.actualMove) <= MAX_PLAUSIBLE_DAILY_MOVE
+      ) {
+        growwn200ByDate.set(r.date, r.actualMove);
+      }
+    }
+    let marketAlpha: number | null = null;
+    let marketAlphaDays = 0;
+    let marketAlphaNiftyDays = 0;
+    if (clean.length && (niftyByDate.size || growwn200ByDate.size)) {
+      const byDayForAlpha = new Map<string, number[]>();
+      for (const r of clean) {
+        const m = r.actualMove as number;
+        const dayRet =
+          r.verdict === "SELL" ? -m : r.verdict === "BUY" ? m : null;
+        if (dayRet === null || !r.date) continue;
+        const bucket = byDayForAlpha.get(r.date) ?? [];
+        bucket.push(dayRet / 100);
+        byDayForAlpha.set(r.date, bucket);
+      }
+      let stratEq = 1;
+      let benchEq = 1;
+      for (const day of [...byDayForAlpha.keys()].sort()) {
+        const realNifty = niftyByDate.get(day);
+        const benchMove = realNifty !== undefined ? realNifty : growwn200ByDate.get(day);
+        if (benchMove === undefined) continue; // only days with a benchmark reading
+        const rets = byDayForAlpha.get(day)!;
+        const eqWeight = rets.reduce((a, b) => a + b, 0) / rets.length;
+        stratEq *= 1 + eqWeight;
+        benchEq *= 1 + benchMove / 100;
+        marketAlphaDays++;
+        if (realNifty !== undefined) marketAlphaNiftyDays++;
+      }
+      if (marketAlphaDays > 0) {
+        marketAlpha = (stratEq - 1) * 100 - (benchEq - 1) * 100;
+      }
     }
 
     // Management alpha: cumulative % the Run 3 de-risk exits saved (or cost),
@@ -416,13 +573,19 @@ export async function getDashboard(): Promise<Dashboard> {
         )
       : null;
 
-    // Best stock by hit rate (min 2 graded calls).
-    const perTicker = new Map<string, { correct: number; n: number }>();
+    // Best stock by hit rate (min 2 graded calls), and — since the dashboard's
+    // been live long enough that "last 45 days" and "whole track record" are
+    // close to the same window — the full per-ticker breakdown for the stock
+    // lookup page's accuracy bar.
+    const perTicker = new Map<string, { correct: number; wrong: number; n: number }>();
+    const gradedDates = new Set<string>();
     for (const r of graded) {
+      if (r.date) gradedDates.add(r.date);
       if (!r.ticker) continue;
-      const t = perTicker.get(r.ticker) ?? { correct: 0, n: 0 };
+      const t = perTicker.get(r.ticker) ?? { correct: 0, wrong: 0, n: 0 };
       t.n += 1;
       if (r.outcome === "Correct") t.correct += 1;
+      else if (r.outcome === "Wrong") t.wrong += 1;
       perTicker.set(r.ticker, t);
     }
     let bestStock: Dashboard["kpi"]["bestStock"] = null;
@@ -433,6 +596,27 @@ export async function getDashboard(): Promise<Dashboard> {
         bestStock = { ticker, hitRate, n };
       }
     }
+    const tickerStats: Dashboard["tickerStats"] = {};
+    for (const [ticker, { correct, wrong, n }] of perTicker) {
+      tickerStats[ticker] = { correct, wrong, n, hitRate: n ? (correct / n) * 100 : 0 };
+    }
+    const trackRecordDays = gradedDates.size;
+
+    // Error management: what to check before trusting today's calls, pulled
+    // from Daily Review fields that were always in Notion but never rendered
+    // anywhere on the dashboard. Split each field on newlines (the routine
+    // writes one item per line) and drop anything blank.
+    const splitLines = (s: string | null): string[] =>
+      (s ?? "")
+        .split(/\r?\n/)
+        .map((l) => l.replace(/^[-•*]\s*/, "").trim())
+        .filter(Boolean);
+    const errorManagement: Dashboard["errorManagement"] = {
+      asOfDate: latestReview?.date ?? null,
+      correctableErrors: splitLines(latestReview?.correctableErrors ?? null),
+      marketDrivenMisses: splitLines(latestReview?.marketDrivenMisses ?? null),
+      standingLessons: splitLines(latestReview?.lessons ?? null),
+    };
 
     // Streak: consecutive most-recent reviews with accuracy >= 50.
     let correctStreak = 0;
@@ -442,9 +626,19 @@ export async function getDashboard(): Promise<Dashboard> {
       else break;
     }
 
+    // Everything for the latest day, verdict-grouped then by conviction, for
+    // the "browse all stocks" dropdown.
+    const VERDICT_RANK: Record<string, number> = { BUY: 0, HOLD: 1, SELL: 2 };
+    const today = [...todayAll].sort(
+      (a, b) =>
+        (VERDICT_RANK[a.verdict ?? ""] ?? 3) - (VERDICT_RANK[b.verdict ?? ""] ?? 3) ||
+        byScore(a, b)
+    );
+
     return {
       latestDate,
       prevDate,
+      today,
       todayBuys,
       todaySells,
       todayHolds,
@@ -464,12 +658,20 @@ export async function getDashboard(): Promise<Dashboard> {
         bestStock,
         correctStreak,
         gradedCount: graded.length,
+        dataErrors,
+        marketAlpha,
+        marketAlphaDays,
+        marketAlphaNiftyDays,
       },
+      tickerStats,
+      trackRecordDays,
+      errorManagement,
     };
   } catch (e: any) {
     return {
       latestDate: null,
       prevDate: null,
+      today: [],
       todayBuys: [],
       todaySells: [],
       todayHolds: [],
@@ -489,6 +691,18 @@ export async function getDashboard(): Promise<Dashboard> {
         bestStock: null,
         correctStreak: 0,
         gradedCount: 0,
+        dataErrors: 0,
+        marketAlpha: null,
+        marketAlphaDays: 0,
+        marketAlphaNiftyDays: 0,
+      },
+      tickerStats: {},
+      trackRecordDays: 0,
+      errorManagement: {
+        asOfDate: null,
+        correctableErrors: [],
+        marketDrivenMisses: [],
+        standingLessons: [],
       },
       error: e?.message ?? "Unknown error fetching Notion data",
     };

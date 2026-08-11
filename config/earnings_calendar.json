@@ -1,0 +1,10 @@
+{
+  "_comment": "Quarterly results dates per ticker (ISO date the results were/are declared). The daily review log showed repeated 'results day not checked' misses (SUZLON -8.5% on 2026-07-28, MARUTI +12.1% on 2026-07-22, HINDUNILVR -13.5% intraday on 2026-07-28, ADANIENT/BEL on 2026-07-30) because this was only ever a prompt instruction to 'remember to check'. This file makes it a hard, code-enforced lookup instead. Update every quarter from the NSE corporate-announcements calendar.",
+  "results_dates": {
+    "SUZLON": ["2026-07-28"],
+    "MARUTI": ["2026-07-22"],
+    "HINDUNILVR": ["2026-07-28"],
+    "ADANIENT": ["2026-07-30"],
+    "BEL": ["2026-07-30"]
+  }
+}

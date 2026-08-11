@@ -64,6 +64,18 @@ class Recommendation(BaseModel):
     suggested_qty: int = 0
     price_at_analysis: Optional[float] = None
 
+    # Risk management. Independent of any trend/SMA signal — the audit found
+    # the 200-DMA cross was the *only* exit trigger in the system, which is
+    # far too lagging to cap a single trade's downside. A BUY/ACCUMULATE idea
+    # gets a stop set at analysis time; nothing waits for a moving average to
+    # notice the position already lost more than the risk budget allows.
+    stop_loss_price: Optional[float] = None
+    # 0..1 calibrated probability of the call being directionally correct,
+    # from src.analysis.calibration — separate from the raw sentiment_score,
+    # which the audit showed is NOT well calibrated to actual outcomes
+    # (highest-conviction "Strong Buy" bucket had the worst hit rate).
+    calibrated_confidence: Optional[float] = None
+
     # Provenance, e.g. "technical:200dma", "youtube:<channel>", "news:brightdata".
     source: str = "system"
 

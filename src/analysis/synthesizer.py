@@ -26,9 +26,12 @@ from config import config
 from src.analysis.schema import Action, Flag, Recommendation
 from src.analysis.tickers import company_name, extract_candidates
 from src.data.news_ingest import Article
+from src.data.price_data import get_verified_price
 from src.data.youtube_ingest import TranscriptDoc
 
 log = logging.getLogger(__name__)
+
+_ENTRY_ACTIONS = {Action.BUY, Action.ACCUMULATE}
 
 _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
 
@@ -98,12 +101,40 @@ def synthesize(
         try:
             recs = _synthesize_with_claude(evidence)
             if recs:
-                return _rank(recs)
+                return _rank([_attach_entry_risk(r) for r in recs])
             log.warning("Claude returned nothing usable; falling back to heuristic.")
         except Exception as exc:
             log.warning("Claude synthesis failed (%s); falling back to heuristic.", exc)
 
-    return _rank([_heuristic_one(e) for e in evidence.values()])
+    return _rank([_attach_entry_risk(_heuristic_one(e)) for e in evidence.values()])
+
+
+def _attach_entry_risk(rec: Recommendation) -> Recommendation:
+    """
+    A BUY/ACCUMULATE idea is worthless without a trustworthy entry price and
+    a stop. Fetches a cross-checked price (src.data.price_data) rather than
+    trusting a single source; if it can't be verified, the idea is downgraded
+    to WATCH instead of being acted on with a possibly-wrong price — this is
+    the fix for the recurring "stale ref price" errors in the daily review
+    log, applied at the point a trade idea is actually produced.
+    """
+    if rec.recommended_action not in _ENTRY_ACTIONS:
+        return rec
+
+    from src.analysis.position_sizing import stop_loss_price  # local import avoids a cycle
+
+    verified = get_verified_price(rec.ticker)
+    if not verified.is_verified or verified.price is None:
+        rec.recommended_action = Action.WATCH
+        rec.rationale = (
+            f"{rec.rationale} [Downgraded to WATCH: price could not be verified — "
+            f"{verified.warning}]"
+        )
+        return rec
+
+    rec.price_at_analysis = verified.price
+    rec.stop_loss_price = stop_loss_price(verified.price)
+    return rec
 
 
 def _rank(recs: list[Recommendation]) -> list[Recommendation]:

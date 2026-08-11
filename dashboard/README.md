@@ -4,23 +4,28 @@ A mobile-first **PWA** that shows today's InvestAI calls at a glance. Reads
 **live from Notion** (the same Recommendations + Daily Review databases the
 daily agent writes to). Gated by a **shared passcode**.
 
-Two tabs: **📊 Today** and **☕ Coffee Shop**.
+Two tabs: **📊 Today** and **🔍 Look up a stock**.
 
 **Today** shows:
 
+- **Error management** — what the model has gotten wrong before and the standing rules
+  it's applying today, shown *before* the calls themselves so you know what to
+  double-check
 - **Strategy P&L (paper)** — return if you followed every graded BUY (and shorted SELLs)
 - **Accuracy** (latest) + **7-day average** + 🔥 streak
 - **Self-rating** and **best-read stock**
 - **Saved by selling early** — cumulative management alpha from the 15:00 de-risk exits
-- **Accuracy trend** line chart
+- **Beating the market?** — paper return vs the real Nifty 50 (or the GROWWN200 proxy on
+  older days), on the same days the model made a call
 - **Buy today** / **Sell-or-avoid today** lists, each row with a **"Through the day"
   timeline** (10 AM status → 3 PM action) once the intraday runs have annotated it
 - **🛡️ Sold before the close** — the day's Run 3 de-risk exits
 - **Yesterday's calls** with graded outcomes (✓ / ✗) and actual move %
 
-**Coffee Shop** shows the six-persona panel — three per-run matrices (Pre-market →
-After the open → Before the close), friends × the BUY shortlist, with stance chips and
-expandable takes. Perspective only; never changes the verdict.
+**Look up a stock** — pick any of the 26 names and see: today's call and full reasoning,
+**yesterday's call and whether it worked**, that stock's **own accuracy track record**
+over the whole run (not just the system-wide number), and what the six coffee-shop
+friends think of it (folded in here instead of living on its own tab).
 
 ---
 
@@ -43,6 +48,12 @@ The data-source IDs are already known and pre-filled in
 The Coffee Shop id has a built-in fallback in `lib/notion.ts`, so setting
 `NOTION_COFFEESHOP_DS` is optional. (A data-source id isn't a secret — only
 `NOTION_TOKEN` is.)
+
+**Daily Review also needs two new Number columns** (added 2026-08-11, not yet in every
+workspace): **Nifty Close** and **Nifty Move %**, populated by Run 1 from the real Nifty
+50 index. Without them the dashboard just falls back to the GROWWN200 proxy for the
+"Beating the market?" comparison — nothing breaks, it just upgrades automatically once
+they're added and the agent starts filling them in.
 
 ## 2. Configure environment
 
@@ -98,14 +109,16 @@ Phone (PWA)  →  Next.js server (Vercel)  →  Notion REST API
                   passcode gate                 └─ Daily Review
 ```
 
-- `lib/notion.ts` — queries the Notion data sources, paginates, computes KPIs
-  (incl. management alpha + the per-run coffee opinions). The Notion token lives
-  only server-side; the browser never sees it.
+- `lib/notion.ts` — queries the Notion data sources, paginates, computes KPIs (incl.
+  management alpha, the market-alpha benchmark comparison, per-ticker accuracy stats, and
+  the error-management summary). The Notion token lives only server-side; the browser
+  never sees it.
 - `middleware.ts` + `app/api/login` — passcode → session cookie.
-- `app/page.tsx` (Today) + `app/coffee/page.tsx` (Coffee Shop) — server components,
+- `app/page.tsx` (Today) + `app/lookup/page.tsx` (Look up a stock) — server components,
   `force-dynamic` so every load is fresh; `app/TabNav.tsx` switches between them.
-- `app/CoffeeShop.tsx` — the friends × shortlist stance matrix (shared by the tab).
-- `app/AccuracyChart.tsx` — dependency-free SVG line chart.
+- `app/StockLookup.tsx` — the stock picker + its detail (today's call, yesterday's call,
+  track record, coffee-shop opinions), used only on the lookup tab.
+- `app/StockDetail.tsx` — the per-factor reasoning drill-down, shared by both tabs.
 
 ## "Today" / "Yesterday" logic
 

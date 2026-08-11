@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { getDashboard, type Rec } from "@/lib/notion";
-import AccuracyChart from "./AccuracyChart";
+import { plainify } from "@/lib/plain";
 import EquityChart from "./EquityChart";
 import TopBar from "./TopBar";
 import TabNav from "./TabNav";
-import ListCard from "./ListCard";
+import Section from "./Section";
+import Panel from "./Panel";
+import StockDetail from "./StockDetail";
 import {
   CircleArrowUp,
   CircleArrowDown,
@@ -17,6 +19,7 @@ import {
   Activity,
   Gauge,
   History,
+  AlertTriangle,
 } from "./Icons";
 import backtest from "@/data/backtest.json";
 
@@ -51,36 +54,20 @@ function fmtPrice(n: number | null): string {
   return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
+// A short "RELIANCE · TCS · INFY" line shown on a collapsed section header.
+function tickerSummary(recs: Rec[]): string {
+  return recs
+    .map((r) => r.ticker)
+    .filter((t): t is string => !!t)
+    .join(" · ");
+}
+
 // Plain-English read of the model's expected direction for the day.
 const DIR: Record<string, { arrow: string; text: string; cls: string }> = {
   Up: { arrow: "▲", text: "expects it to go up", cls: "pos" },
   Down: { arrow: "▼", text: "expects it to go down", cls: "neg" },
   Flat: { arrow: "▬", text: "expects little change", cls: "" },
 };
-
-// Swap the most common market jargon in the model's one-liner for words
-// a non-finance reader understands. Conservative, whole-word only.
-const GLOSSARY: [RegExp, string][] = [
-  [/\b200-?DMA\b/gi, "its long-term average price"],
-  [/\b50-?DMA\b/gi, "its average price"],
-  [/\bDMA\b/gi, "average price"],
-  [/\bMACD\b/gi, "the trend signal"],
-  [/\bRSI\b/gi, "momentum"],
-  [/\bP\/E\b/gi, "the price-vs-profit ratio"],
-  [/\bbullish\b/gi, "positive"],
-  [/\bbearish\b/gi, "negative"],
-  [/\boverbought\b/gi, "looking expensive"],
-  [/\boversold\b/gi, "looking cheap"],
-  [/\bbreakout\b/gi, "a sharp move up"],
-  [/\bresistance\b/gi, "a price ceiling"],
-  [/\bsupport\b/gi, "a price floor"],
-];
-function plainify(s: string | null): string | null {
-  if (!s) return s;
-  let out = s;
-  for (const [re, rep] of GLOSSARY) out = out.replace(re, rep);
-  return out;
-}
 
 // Is the Indian market closed today (weekend)? Computed in IST.
 function isWeekendIST(): boolean {
@@ -173,44 +160,52 @@ function StockRow({
   const dir = r.expectedDirection ? DIR[r.expectedDirection] : null;
   return (
     <li className="stock-row col">
-      <div className="stock-row-top">
-        <div className="stock-main">
-          <span className="ticker">{r.ticker ?? "—"}</span>
-          {r.company && <span className="coname">{r.company}</span>}
+      <details className="srow">
+        <summary className="srow-sum">
+          <div className="stock-row-top">
+            <div className="stock-main">
+              <span className="ticker">{r.ticker ?? "—"}</span>
+              {r.company && <span className="coname">{r.company}</span>}
+            </div>
+            <div className="stock-meta">
+              {r.refPrice != null && (
+                <span className="price">{fmtPrice(r.refPrice)}</span>
+              )}
+              {alloc != null && (
+                <span className="alloc" title="How much of your money to put in this one">
+                  {alloc}%
+                </span>
+              )}
+              <span className="srow-chev" aria-hidden="true" />
+            </div>
+          </div>
+          <div className="stock-sub">
+            {dir && (
+              <span className={`dir ${dir.cls}`}>
+                {dir.arrow} {dir.text}
+              </span>
+            )}
+            {typeof r.compositeScore === "number" && (
+              <span className="conf">
+                confidence {r.compositeScore.toFixed(0)}/100
+              </span>
+            )}
+            {r.outcome && r.outcome !== "Pending" && (
+              <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
+                {r.outcome === "Correct" ? "✓ right" : "✗ wrong"}
+              </span>
+            )}
+            {move !== null && (
+              <span className={`move ${moveClass}`}>{signed(move)}</span>
+            )}
+          </div>
+          {showWhy && r.why && <div className="why">{plainify(r.why)}</div>}
+        </summary>
+        <div className="srow-body">
+          <StockDetail r={r} />
+          <IntradayTimeline r={r} />
         </div>
-        <div className="stock-meta">
-          {r.refPrice != null && (
-            <span className="price">{fmtPrice(r.refPrice)}</span>
-          )}
-          {alloc != null && (
-            <span className="alloc" title="How much of your money to put in this one">
-              {alloc}%
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="stock-sub">
-        {dir && (
-          <span className={`dir ${dir.cls}`}>
-            {dir.arrow} {dir.text}
-          </span>
-        )}
-        {typeof r.compositeScore === "number" && (
-          <span className="conf">
-            confidence {r.compositeScore.toFixed(0)}/100
-          </span>
-        )}
-        {r.outcome && r.outcome !== "Pending" && (
-          <span className={`outcome ${r.outcome === "Correct" ? "ok" : "bad"}`}>
-            {r.outcome === "Correct" ? "✓ right" : "✗ wrong"}
-          </span>
-        )}
-        {move !== null && (
-          <span className={`move ${moveClass}`}>{signed(move)}</span>
-        )}
-      </div>
-      {showWhy && r.why && <div className="why">{plainify(r.why)}</div>}
-      <IntradayTimeline r={r} />
+      </details>
     </li>
   );
 }
@@ -337,21 +332,118 @@ export default async function Page() {
         </div>
       )}
 
-      {/* ===== What to do today (action-first) ===== */}
+      {/* Market mood — surfaced at the very top so the day's overall read
+          frames everything below it */}
+      <Panel
+        title={
+          <>
+            <Gauge className="ico" /> Today&apos;s market mood
+          </>
+        }
+        hint={<span className={`sent-badge ${s.tone}`}>{s.label}</span>}
+        className={`sentiment ${s.tone}`}
+      >
+        <div className="gauge">
+          <div className="gauge-track" />
+          <div className="gauge-marker" style={{ left: `${gaugePos}%` }} />
+          <div className="gauge-labels">
+            <span>Fearful</span>
+            <span>Calm</span>
+            <span>Greedy</span>
+          </div>
+        </div>
+        <p className="sent-narrative">{s.narrative}</p>
+        <p className="explain">
+          Think of this like a mood meter. Left = people are scared and selling;
+          right = people are excited and buying. The white dot is where today sits.
+        </p>
+        {s.agentNote && (
+          <p className="sent-note">
+            <span className="sent-note-label">In the model&apos;s words</span>{" "}
+            {s.agentNote}
+          </p>
+        )}
+      </Panel>
 
-      {/* Today BUY — conviction-weighted allocation + why (detailed by default) */}
-      <ListCard
+      {/* Error management — Daily Review fields that always existed in Notion
+          but were never shown anywhere: what the model got wrong before and
+          the standing rules it's applying today because of it. Placed BEFORE
+          the calls themselves, on purpose — read this before trusting a
+          BUY/SELL, not after. */}
+      <Panel
+        title={
+          <>
+            <AlertTriangle className="ico" /> Error management — check this first
+          </>
+        }
+        hint={
+          d.errorManagement.asOfDate
+            ? `as of ${fmtDate(d.errorManagement.asOfDate)}`
+            : undefined
+        }
+      >
+        <p className="explain top">
+          Before you act on today&apos;s calls, here&apos;s what the model has
+          gotten wrong before and what it&apos;s watching out for now — so you
+          know what to double-check yourself.
+        </p>
+        {d.errorManagement.correctableErrors.length > 0 && (
+          <>
+            <div className="yday-sub bad">Mistakes it could have avoided</div>
+            <ul className="err-list">
+              {d.errorManagement.correctableErrors.map((line, i) => (
+                <li key={i}>{plainify(line)}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        {d.errorManagement.marketDrivenMisses.length > 0 && (
+          <>
+            <div className="yday-sub">
+              Sound calls where the market just moved against it
+            </div>
+            <ul className="err-list muted-list">
+              {d.errorManagement.marketDrivenMisses.map((line, i) => (
+                <li key={i}>{plainify(line)}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        {d.errorManagement.standingLessons.length > 0 && (
+          <>
+            <div className="yday-sub ok">
+              Rules it&apos;s applying today because of past mistakes
+            </div>
+            <ul className="err-list">
+              {d.errorManagement.standingLessons.slice(0, 10).map((line, i) => (
+                <li key={i}>{plainify(line)}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        {d.errorManagement.correctableErrors.length === 0 &&
+          d.errorManagement.marketDrivenMisses.length === 0 &&
+          d.errorManagement.standingLessons.length === 0 && (
+            <p className="muted empty">No error notes recorded yet.</p>
+          )}
+      </Panel>
+
+      {/* ============ TIER 1 — What to do today ============ */}
+      <div className="group-eyebrow">Today&apos;s calls</div>
+
+      {/* BUY — conviction-weighted allocation + why; open by default */}
+      <Section
         title={
           <>
             <CircleArrowUp className="ico" /> Worth buying today
           </>
         }
         titleClass="buy"
-        hint={
-          d.todayBuys.length > 1 ? "% = how to split your money" : undefined
-        }
-        hasItems={d.todayBuys.length > 0}
-        startDetailed
+        tone="buy"
+        count={d.todayBuys.length}
+        summary={tickerSummary(d.todayBuys) || "Nothing today"}
+        hint={d.todayBuys.length > 1 ? "% = how to split your money" : undefined}
+        defaultOpen
       >
         {d.todayBuys.length ? (
           <ul className="stock-list">
@@ -367,18 +459,20 @@ export default async function Page() {
         ) : (
           <p className="muted empty">No BUY calls for the latest day.</p>
         )}
-      </ListCard>
+      </Section>
 
-      {/* Today SELL — with why (detailed by default) */}
-      <ListCard
+      {/* SELL — with why; open by default */}
+      <Section
         title={
           <>
             <CircleArrowDown className="ico" /> Avoid or sell today
           </>
         }
         titleClass="sell"
-        hasItems={d.todaySells.length > 0}
-        startDetailed
+        tone="sell"
+        count={d.todaySells.length}
+        summary={tickerSummary(d.todaySells) || "Nothing today"}
+        defaultOpen
       >
         {d.todaySells.length ? (
           <ul className="stock-list">
@@ -389,17 +483,19 @@ export default async function Page() {
         ) : (
           <p className="muted empty">No SELL calls for the latest day.</p>
         )}
-      </ListCard>
+      </Section>
 
-      {/* Today HOLD — secondary, so compact by default */}
-      <ListCard
+      {/* HOLD — secondary; collapsed by default */}
+      <Section
         title={
           <>
             <CircleMinus className="ico" /> Already own it? Just hold
           </>
         }
         titleClass="hold-h"
-        hasItems={d.todayHolds.length > 0}
+        tone="hold"
+        count={d.todayHolds.length}
+        summary={tickerSummary(d.todayHolds) || "Nothing today"}
       >
         {d.todayHolds.length ? (
           <ul className="stock-list">
@@ -410,11 +506,15 @@ export default async function Page() {
         ) : (
           <p className="muted empty">No HOLD calls for the latest day.</p>
         )}
-      </ListCard>
+      </Section>
 
-      {/* Today's de-risk — Run 3 sold/trimmed before the 3:30 close */}
+      {/* Looking up a specific stock (yesterday's call, its own track record,
+          the coffee-shop debate) now lives on its own tab — see TabNav —
+          instead of crowding the home page. */}
+
+      {/* De-risk — Run 3 sold/trimmed before the 3:30 close */}
       {d.todayDerisk.length > 0 && (
-        <ListCard
+        <Panel
           title={
             <>
               <Shield className="ico" /> Sold before the close
@@ -447,19 +547,35 @@ export default async function Page() {
             broke during the day — locking in the result before the market shut,
             so an overnight drop can&apos;t hurt.
           </p>
-        </ListCard>
+        </Panel>
       )}
 
-      {/* ===== How's it doing (trust) ===== */}
+      {/* ============ TIER 2 — How it's doing (glance) ============ */}
+      <div className="group-eyebrow">How it&apos;s doing</div>
 
-      {/* KPI strip — plain-English scorecards */}
+      <div className="kpi-hero">
+        <div className="kpi-hero-top">
+          <span className="kpi-label">Pretend profit so far</span>
+          {kpi.correctStreak ? (
+            <span className="kpi-streak">
+              <Flame size={12} className="flame" /> {kpi.correctStreak}-day streak
+            </span>
+          ) : null}
+        </div>
+        <div className={`kpi-hero-val ${pnlTone}`}>{signed(kpi.strategyPnl)}</div>
+        <div className="kpi-hint">
+          compounded, equal-weight, if you&apos;d followed all {kpi.gradedCount}{" "}
+          graded calls
+        </div>
+        {kpi.dataErrors > 0 ? (
+          <div className="kpi-hint warn">
+            ⚠ {kpi.dataErrors} call{kpi.dataErrors === 1 ? "" : "s"} ignored — a
+            bad reference price was logged (needs a data fix, see report)
+          </div>
+        ) : null}
+      </div>
+
       <section className="kpi-grid">
-        <Kpi
-          label="Pretend profit so far"
-          value={signed(kpi.strategyPnl)}
-          tone={pnlTone as any}
-          hint={`if you'd followed all ${kpi.gradedCount} graded calls`}
-        />
         <Kpi
           label="How often it's right"
           value={kpi.accuracy === null ? "—" : `${kpi.accuracy.toFixed(0)}%`}
@@ -474,16 +590,7 @@ export default async function Page() {
           label="Its report card"
           value={kpi.selfRating === null ? "—" : `${kpi.selfRating.toFixed(0)}/100`}
           tone="neutral"
-          hint={
-            kpi.correctStreak ? (
-              <span className="hint-ico">
-                <Flame size={12} className="flame" /> {kpi.correctStreak} good
-                days in a row
-              </span>
-            ) : (
-              "the model grades itself"
-            )
-          }
+          hint="the model grades itself"
         />
         <Kpi
           label="Most reliable stock"
@@ -509,46 +616,18 @@ export default async function Page() {
         />
       </section>
 
-      {/* ===== Context ===== */}
-
-      {/* Market mood */}
-      <section className={`card sentiment ${s.tone}`}>
-        <div className="card-head">
-          <h2>
-            <Gauge className="ico" /> Today&apos;s market mood
-          </h2>
-          <span className={`sent-badge ${s.tone}`}>{s.label}</span>
-        </div>
-        <div className="gauge">
-          <div className="gauge-track" />
-          <div className="gauge-marker" style={{ left: `${gaugePos}%` }} />
-          <div className="gauge-labels">
-            <span>Fearful</span>
-            <span>Calm</span>
-            <span>Greedy</span>
-          </div>
-        </div>
-        <p className="sent-narrative">{s.narrative}</p>
-        <p className="explain">
-          Think of this like a mood meter. Left = people are scared and selling;
-          right = people are excited and buying. The white dot is where today sits.
-        </p>
-        {s.agentNote && (
-          <p className="sent-note">
-            <span className="sent-note-label">In the model&apos;s words</span>{" "}
-            {s.agentNote}
-          </p>
-        )}
-      </section>
+      {/* ============ TIER 3 — Context & track record ============ */}
+      <div className="group-eyebrow">Context &amp; track record</div>
 
       {/* Gold & Silver */}
-      <section className="card">
-        <div className="card-head">
-          <h2>
+      <Panel
+        title={
+          <>
             <Coins className="ico" /> Gold &amp; Silver
-          </h2>
-          <span className="muted">safe-haven options</span>
-        </div>
+          </>
+        }
+        hint="safe-haven options"
+      >
         {d.commodities.length ? (
           <ul className="stock-list">
             {d.commodities.map((r, i) => {
@@ -617,35 +696,69 @@ export default async function Page() {
         ) : (
           <p className="muted empty">No Gold/Silver data for the latest day.</p>
         )}
-      </section>
+      </Panel>
 
-      {/* ===== Track record (history) ===== */}
-
-      {/* Accuracy chart */}
-      <section className="card">
-        <div className="card-head">
-          <h2>
-            <Activity className="ico" /> How often it&apos;s been right
-          </h2>
-          <span className="muted">last {d.reviews.length} days</span>
-        </div>
-        <AccuracyChart
-          data={d.reviews.map((r) => ({ date: r.date, accuracy: r.accuracy }))}
-        />
-        <p className="explain">
-          Each point is one day&apos;s score. Higher is better. 50% is the same as
-          flipping a coin — above that line means the model is doing better than luck.
-        </p>
-      </section>
+      {/* Beating the market? — is this actually adding value, or just riding
+          Nifty up? A BUY that's "Correct" on a day the whole market rallied
+          isn't real stock-picking skill. Uses the real Nifty 50 reading where
+          it's been logged (from 2026-08-11 on), and falls back to GROWWN200
+          (Nifty 200 ETF, already one of the 26 tracked names) on older days —
+          see kpi.marketAlphaNiftyDays. Replaces the old self-grading accuracy
+          line chart, which just restated the "how often it's right" KPI above
+          as a graph without adding new signal. */}
+      <Panel
+        title={
+          <>
+            <Activity className="ico" /> Beating the market?
+          </>
+        }
+        hint={
+          kpi.marketAlphaDays > 0 ? `${kpi.marketAlphaDays} days compared` : undefined
+        }
+      >
+        {kpi.marketAlpha === null ? (
+          <p className="muted empty">Not enough graded days yet to compare.</p>
+        ) : (
+          <>
+            <div className={`kpi-hero-val ${kpi.marketAlpha >= 0 ? "pos" : "neg"}`}>
+              {signed(kpi.marketAlpha)}
+            </div>
+            <p className="explain">
+              {kpi.marketAlpha >= 0 ? (
+                <>
+                  On the days it made a call, this model beat just holding the
+                  overall market by <strong>{signed(kpi.marketAlpha)}</strong>.
+                </>
+              ) : (
+                <>
+                  On the days it made a call, this model did{" "}
+                  <strong>{Math.abs(kpi.marketAlpha).toFixed(1)}% worse</strong> than
+                  just holding the overall market. Being &quot;right&quot; on a
+                  call isn&apos;t the same as beating the market — the market
+                  can move further than the call did.
+                </>
+              )}
+            </p>
+            <p className="explain">
+              {kpi.marketAlphaNiftyDays > 0
+                ? kpi.marketAlphaNiftyDays === kpi.marketAlphaDays
+                  ? "Compared against the real Nifty 50 index every day."
+                  : `Compared against the real Nifty 50 on ${kpi.marketAlphaNiftyDays} of those days; the rest use a Nifty 200 fund (GROWWN200) as a stand-in, from before Nifty 50 was tracked.`
+                : "Compared against a Nifty 200 fund (GROWWN200) as a stand-in for the market — the real Nifty 50 isn't logged yet."}
+            </p>
+          </>
+        )}
+      </Panel>
 
       {/* Track Record — 1yr backtest, told as a ₹100 story */}
-      <section className="card">
-        <div className="card-head">
-          <h2>
+      <Panel
+        title={
+          <>
             <TrendingUp className="ico" /> Does this actually work?
-          </h2>
-          <span className="muted">1-year test</span>
-        </div>
+          </>
+        }
+        hint="1-year test"
+      >
         <p className="explain top">
           Imagine you put <strong>₹100</strong> in one year ago and followed this
           plan every day. Here&apos;s where it would be today versus just leaving
@@ -697,17 +810,16 @@ export default async function Page() {
           ₹100 briefly fell that much before recovering). Past results don&apos;t
           guarantee the future.
         </p>
-      </section>
+      </Panel>
 
-      {/* Yesterday — only the standout hits and worst misses (compact by default) */}
-      <ListCard
+      {/* Yesterday — only the standout hits and worst misses */}
+      <Panel
         title={
           <>
             <History className="ico" /> Yesterday&apos;s scorecard
           </>
         }
         hint={fmtDate(d.prevDate)}
-        hasItems={gradedYday.length > 0}
       >
         {gradedYday.length ? (
           <>
@@ -737,7 +849,7 @@ export default async function Page() {
             Yesterday&apos;s calls are still being graded.
           </p>
         )}
-      </ListCard>
+      </Panel>
 
       <footer className="foot">
         Reads live from Notion · {fmtDate(d.latestDate)}
