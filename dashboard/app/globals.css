@@ -1401,10 +1401,22 @@ details > summary::-webkit-details-marker {
 .acc-panel {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+  /* visibility (not just the 0fr/overflow-hidden collapse) is the real guard
+     here — some browsers still PAINT a sliver of a flex-wrap child (e.g. the
+     sector chips, the KPI grid) even when layout correctly reports 0 height,
+     which read as "half visible when closed". Hide visibility immediately on
+     close; only reveal it once the open transition starts, so the slide
+     animation still looks right but a collapsed panel can never bleed through. */
+  visibility: hidden;
+  transition: grid-template-rows 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.28s;
 }
 .acc.open .acc-panel {
   grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
 }
 .acc-panel-inner {
   overflow: hidden;

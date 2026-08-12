@@ -8,32 +8,23 @@ import Section from "./Section";
 import Panel from "./Panel";
 import StockDetail from "./StockDetail";
 import SectorBoard from "./SectorBoard";
-import MLTrendPanel, { ML_HORIZON_DAYS } from "./MLTrend";
 import {
   CircleArrowUp,
   CircleArrowDown,
   CircleMinus,
   Shield,
-  Coins,
   Moon,
   Flame,
   TrendingUp,
   Gauge,
   Clock,
   Layers,
-  Smile,
-  Frown,
 } from "./Icons";
 import backtest from "@/data/backtest.json";
 
 // Always render fresh from Notion.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-const COMMODITY_META: Record<string, { name: string }> = {
-  GOLDBEES: { name: "Gold (GOLDBEES)" },
-  SILVERBEES: { name: "Silver (SILVERBEES)" },
-};
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";
@@ -559,127 +550,12 @@ export default async function Page() {
         />
       </section>
 
-      {/* Report-card mood — the model holds itself to a 75% accuracy bar;
-          this is the plain-English "did it hit that bar today" read, meant
-          to reinforce the habit the same way the model's own Step 1.5
-          learning loop does (see agent/routine_prompt.md). */}
-      {kpi.accuracy !== null && (
-        <div className={`mood-badge ${kpi.accuracy >= 75 ? "pos" : "neg"}`}>
-          {kpi.accuracy >= 75 ? (
-            <Smile size={26} className="mood-ico" />
-          ) : (
-            <Frown size={26} className="mood-ico" />
-          )}
-          <div className="mood-text">
-            <div className="mood-title">
-              {kpi.accuracy >= 75 ? "On target today" : "Below target today"}
-            </div>
-            <div className="mood-sub">
-              {kpi.accuracy >= 75
-                ? `${kpi.accuracy.toFixed(0)}% accuracy — at or above the 75% bar the model holds itself to. Keep this up.`
-                : `${kpi.accuracy.toFixed(0)}% accuracy — below the 75% bar. The model treats this as a signal to tighten up tomorrow, not just a number.`}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ============ TIER 3 — Context & track record ============ */}
       <div className="group-eyebrow">Context &amp; track record</div>
 
-      {/* Gold & Silver */}
-      <Panel
-        title={
-          <>
-            <Coins className="ico" /> Gold &amp; Silver
-          </>
-        }
-        hint="safe-haven options"
-      >
-        {d.commodities.length ? (
-          <ul className="stock-list">
-            {d.commodities.map((r, i) => {
-              const meta = COMMODITY_META[r.ticker ?? ""] ?? {
-                name: r.ticker ?? "—",
-              };
-              const dir = r.expectedDirection ? DIR[r.expectedDirection] : null;
-              return (
-                <li className="stock-row col" key={i}>
-                  <div className="stock-row-top">
-                    <div className="stock-main">
-                      <Coins
-                        size={20}
-                        className={
-                          r.ticker === "GOLDBEES" ? "coin-gold" : "coin-silver"
-                        }
-                      />
-                      <span className="ticker">{meta.name}</span>
-                      <span
-                        className={`verdict ${
-                          r.verdict === "BUY"
-                            ? "buy"
-                            : r.verdict === "SELL"
-                            ? "sell"
-                            : "hold"
-                        }`}
-                      >
-                        {r.verdict ? VERDICT_WORD[r.verdict] ?? r.verdict : "—"}
-                      </span>
-                    </div>
-                    <div className="stock-meta">
-                      {r.refPrice != null && (
-                        <span className="price">{fmtPrice(r.refPrice)}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="stock-sub">
-                    {dir && (
-                      <span className={`dir ${dir.cls}`}>
-                        {dir.arrow} {dir.text}
-                      </span>
-                    )}
-                    {r.outcome && r.outcome !== "Pending" && (
-                      <span
-                        className={`outcome ${
-                          r.outcome === "Correct" ? "ok" : "bad"
-                        }`}
-                      >
-                        {r.outcome === "Correct" ? "✓ right" : "✗ wrong"}
-                      </span>
-                    )}
-                    {typeof r.actualMove === "number" && (
-                      <span
-                        className={`move ${
-                          r.actualMove > 0 ? "pos" : r.actualMove < 0 ? "neg" : ""
-                        }`}
-                      >
-                        {signed(r.actualMove)}
-                      </span>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="muted empty">No Gold/Silver data for the latest day.</p>
-        )}
-      </Panel>
-
-      {/* A second, independent opinion on where things might be headed —
-          a traditional ML model's 15-trading-day lean, separate from the
-          LLM's own day-to-day verdict above. Collapsed by default; its own
-          honest walk-forward accuracy is surfaced right at the top of the
-          panel, not hidden. */}
-      <Section
-        title={
-          <>
-            <TrendingUp className="ico" /> {ML_HORIZON_DAYS}-day trend forecast (ML)
-          </>
-        }
-        summary="A second opinion, not the daily verdict"
-      >
-        <MLTrendPanel />
-      </Section>
+      {/* Gold & Silver live only in "Today's calls" above (they're part of
+          d.today like every other instrument) — no separate duplicate panel
+          here; that was redundant. */}
 
       {/* Deeper trust/context content, collapsed by default — the daily
           view above should answer "what do I do today"; this answers

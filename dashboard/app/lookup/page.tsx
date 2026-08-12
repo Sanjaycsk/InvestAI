@@ -2,6 +2,7 @@ import { type Rec, getDashboard } from "@/lib/notion";
 import { plainify } from "@/lib/plain";
 import TopBar from "../TopBar";
 import TabNav from "../TabNav";
+import Section from "../Section";
 import StockLookup from "../StockLookup";
 import DateFilter from "../DateFilter";
 import { AlertTriangle, History, Clock } from "../Icons";
@@ -117,16 +118,19 @@ export default async function LookupPage() {
 
       {/* Browse a past day — capped at the last 7 trading days on purpose;
           this is a quick recent-history check, not a full archive (the
-          1-year backtest further down covers the long view). */}
+          1-year backtest further down covers the long view). Collapsed by
+          default, like everything else that isn't the day's headline. */}
       <div className="group-eyebrow">Past week</div>
-      <section className="card">
-        <div className="card-head">
-          <h2>
+      <Section
+        title={
+          <>
             <Clock className="ico" /> Browse a past day
-          </h2>
-        </div>
+          </>
+        }
+        summary="Last 7 trading days"
+      >
         <DateFilter days={d.recentDays} />
-      </section>
+      </Section>
 
       {/* Error management — a GENERAL summary of the kind of mistakes this
           model tends to make (the standing Lessons rule set), not something
@@ -186,14 +190,15 @@ export default async function LookupPage() {
       </section>
 
       {/* Yesterday's scorecard — moved off the home page; a whole-portfolio
-          recap, not specific to one stock. */}
-      <section className="card">
-        <div className="card-head">
-          <h2>
+          recap, not specific to one stock. Collapsed by default. */}
+      <Section
+        title={
+          <>
             <History className="ico" /> Yesterday&apos;s scorecard
-          </h2>
-          <span className="muted">{fmtDate(d.prevDate)}</span>
-        </div>
+          </>
+        }
+        summary={fmtDate(d.prevDate)}
+      >
         {gradedYday.length ? (
           <>
             <div className="yday-sub ok">Worked well</div>
@@ -220,7 +225,7 @@ export default async function LookupPage() {
         ) : (
           <p className="muted empty">Yesterday&apos;s calls are still being graded.</p>
         )}
-      </section>
+      </Section>
 
       {/* How this all works — reference material, collapsed by default so it
           doesn't get in the way of actually looking a stock up. */}
@@ -229,49 +234,66 @@ export default async function LookupPage() {
         <summary>How to read a stock&apos;s call</summary>
         <div className="key-block">
           <div className="key-h">The basics</div>
-          <p className="explain top">
-            Every trading morning, the model checks 26 things — 23 stocks, one
-            broad-market fund, and gold + silver — and gives each one a call:
-            <strong> Buy</strong>, <strong>Hold</strong>, or{" "}
-            <strong>Sell / avoid</strong>. That morning call is
-            &quot;frozen&quot; for the day — two lighter checks later (around
-            10 AM and 3 PM) only watch for the reasoning breaking down; they
-            never change the call itself.
-          </p>
+          <ul className="err-list">
+            <li>
+              Every trading morning, the model checks 26 things — 23 stocks,
+              one broad-market fund, and gold + silver.
+            </li>
+            <li>
+              Each gets one call: <strong>Buy</strong>, <strong>Hold</strong>,
+              or <strong>Sell / avoid</strong>.
+            </li>
+            <li>
+              That morning call is &quot;frozen&quot; for the day — two
+              lighter checks later (10 AM, 3 PM) only watch for the reasoning
+              breaking down; they never change the call itself.
+            </li>
+          </ul>
         </div>
         <div className="key-block">
           <div className="key-h">The confidence score</div>
-          <p className="explain top">
-            Each stock gets a score out of 100, built from six things: how
-            healthy the business is, its price trend, whether it&apos;s cheap
-            or pricey, the big-picture economy, what people are saying about
-            it, and what could go wrong. Higher isn&apos;t always
-            better — the model has found its 60-70 &quot;Watchlist&quot; band
-            has actually been more reliable than its rare 80+
-            &quot;Strong Buy&quot; calls, so treat a very high score as a cue
-            to double-check, not extra certainty.
-          </p>
+          <ul className="err-list">
+            <li>
+              Each stock gets a score out of 100, built from six things:
+              business health, price trend, cheap-or-pricey, big-picture
+              economy, what people are saying, and what could go wrong.
+            </li>
+            <li>
+              Higher isn&apos;t always better — its 60-70 &quot;Watchlist&quot;
+              band has actually been more reliable than its rare 80+
+              &quot;Strong Buy&quot; calls.
+            </li>
+            <li>Treat a very high score as a cue to double-check, not extra certainty.</li>
+          </ul>
         </div>
         <div className="key-block">
           <div className="key-h">Grading itself</div>
-          <p className="explain top">
-            Every morning, before making new calls, the model checks
-            yesterday&apos;s: did the stock actually move the way it said it
-            would? That becomes the accuracy number you see on the Today tab.
-            It also keeps a running list of its own mistakes (see above) and
-            is supposed to apply those lessons going forward.
-          </p>
+          <ul className="err-list">
+            <li>
+              Every morning, before making new calls, it checks
+              yesterday&apos;s: did the stock actually move the way it said
+              it would? That becomes the accuracy number on the Today tab.
+            </li>
+            <li>
+              It also keeps a running list of its own mistakes (see above)
+              and is supposed to apply those lessons going forward.
+            </li>
+          </ul>
         </div>
         <div className="key-block">
           <div className="key-h">What it isn&apos;t</div>
-          <p className="explain top">
-            This is research and education only — it never places a real
-            trade. The &quot;profit&quot; numbers on the Today tab are
-            pretend: what you&apos;d have made if you&apos;d actually followed
-            every call. Markets are uncertain and past results don&apos;t
-            guarantee anything — always make your own call before you invest
-            real money.
-          </p>
+          <ul className="err-list">
+            <li>Research and education only — it never places a real trade.</li>
+            <li>
+              The &quot;profit&quot; numbers on the Today tab are pretend:
+              what you&apos;d have made if you&apos;d followed every call.
+            </li>
+            <li>
+              Markets are uncertain and past results don&apos;t guarantee
+              anything — always make your own call before investing real
+              money.
+            </li>
+          </ul>
         </div>
       </details>
 
