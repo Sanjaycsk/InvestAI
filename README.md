@@ -147,6 +147,8 @@ agent/routine_prompt.md      the exact Run-1 prompt + the sibling routine list
 docs/how-it-works.html       shareable, non-technical explainer
 docs/architecture-diagram.svg  editable vector diagram (Figma-importable)
 dashboard/                   mobile PWA (Next.js) — reads live from Notion
+backtest/                    experimental trend-forecasting research (GBM/ARIMA/LSTM) —
+                              honest walk-forward results, none wired into the live agent
 config/  src/  scripts/  tests/   original local Python toolkit (200-DMA, RSS,
                                    discovery, simulated execution) — the prototype
                                    this evolved from; kept for local/offline use.
@@ -175,3 +177,22 @@ dashboard, and each routine's run history.
 - Dashboard: Coffee Shop folded into the per-stock lookup instead of its own tab, a new
   **Error Management** panel surfacing the model's own logged mistakes, and a
   **Beating the market?** panel replacing the old self-grading accuracy chart
+
+**2026-08-11/12 v2.1** — personalization, sector view, and an honest research dead-end:
+- Dashboard: per-viewer **holdings toggle** (localStorage, no accounts) that labels each
+  call "you own this" vs not; a **sector board** showing per-sector Bullish/Bearish/Mixed
+  mood; a dynamic **entry-window banner** (flags the 9:15–11:00 AM IST buying window vs a
+  stale 8:30 AM verdict); a 7-day **date filter** on the Details/lookup tab
+- Agent: Run 1 Step 1 gained a **SELF-INCENTIVE** check — states whether today's accuracy
+  cleared a 75% bar and applies Step 1.5's lessons more strictly after a miss (edited in
+  `agent/routine_prompt.md` / `RUN1_prompt_ready_to_paste.txt`; **not yet pushed to the
+  live cloud routine** — needs a separate RemoteTrigger update)
+- Experimental **trend-prediction models** (`backtest/`): five honest attempts at 15/5-day
+  directional forecasting (gradient boosting, ARIMA, GBM with richer features, LSTM) —
+  none beat a naive baseline on walk-forward testing, so none are surfaced in the
+  dashboard; kept in the repo as an honest research record rather than deleted
+- UI fixes: a real Chromium paint bug in the accordion collapse animation (a closed
+  section could still show a sliver of content); removed the now-redundant accuracy mood
+  badge (duplicated the Accuracy KPI card) and a duplicate standalone Gold & Silver panel;
+  "Browse a past day" / "Yesterday's scorecard" are now collapsible dropdowns like the
+  rest of the app

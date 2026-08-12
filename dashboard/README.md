@@ -8,6 +8,8 @@ Two tabs: **📊 Today** and **🔍 Look up a stock**.
 
 **Today** shows:
 
+- **Entry-window banner** — flags whether you're inside the 9:15–11:00 AM IST buying
+  window or looking at a stale 8:30 AM verdict later in the day
 - **Error management** — what the model has gotten wrong before and the standing rules
   it's applying today, shown *before* the calls themselves so you know what to
   double-check
@@ -17,15 +19,24 @@ Two tabs: **📊 Today** and **🔍 Look up a stock**.
 - **Saved by selling early** — cumulative management alpha from the 15:00 de-risk exits
 - **Beating the market?** — paper return vs the real Nifty 50 (or the GROWWN200 proxy on
   older days), on the same days the model made a call
+- **By sector** — per-sector Bullish/Bearish/Mixed mood, collapsible
 - **Buy today** / **Sell-or-avoid today** lists, each row with a **"Through the day"
-  timeline** (10 AM status → 3 PM action) once the intraday runs have annotated it
+  timeline** (10 AM status → 3 PM action) once the intraday runs have annotated it, and an
+  **"you own this"** badge if you've flagged that ticker as a holding (per-device toggle,
+  stored only in your browser — no accounts)
 - **🛡️ Sold before the close** — the day's Run 3 de-risk exits
 - **Yesterday's calls** with graded outcomes (✓ / ✗) and actual move %
 
 **Look up a stock** — pick any of the 26 names and see: today's call and full reasoning,
 **yesterday's call and whether it worked**, that stock's **own accuracy track record**
 over the whole run (not just the system-wide number), and what the six coffee-shop
-friends think of it (folded in here instead of living on its own tab).
+friends think of it (folded in here instead of living on its own tab). "Browse a past
+day" (7-day date filter) and "Yesterday's scorecard" are collapsible dropdowns here too.
+
+> An experimental trend-forecasting model (`backtest/train_ml_trend.py` + ARIMA/LSTM
+> variants) was tried and evaluated honestly on walk-forward accuracy — none beat a naive
+> baseline, so none of it is surfaced in the UI. The scripts and data stay in the repo as
+> a research record.
 
 ---
 

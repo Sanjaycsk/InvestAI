@@ -114,9 +114,11 @@ Watchlist (60-70) → HOLD · Hold (45-60) → HOLD · Avoid/Sell (<45) → SELL
 
 ## The day's loop
 **Run 1 (08:30)** — STEP 0 trading-day gate · STEP 1 grade yesterday's Pending rows
-(+ management alpha) → Daily Review row · STEP 1.5 learn from recent reviews · STEP 2
-per-type 6-factor score → category → verdict · STEP 3 log one Recommendations row per
-instrument (overwrite-safe; verdict frozen) · STEP 4 coffee debate (Pre-market).
+(+ management alpha, + a self-incentive check against a 75% accuracy bar as its last
+sub-step, which sets how strictly today's lessons get applied) → Daily Review row ·
+STEP 1.5 learn from recent reviews · STEP 2 per-type 6-factor score → category → verdict
+· STEP 3 log one Recommendations row per instrument (overwrite-safe; verdict frozen) ·
+STEP 4 coffee debate (Pre-market).
 **Run 2 (10:00)** — gate · load today's verdicts · read friend Inputs (today, our 26
 only) · pull intraday prices · write `Run2 Status/Action/Note/Price` (mostly "Intact / None")
 · STEP 4 coffee debate (Confirm).
@@ -249,6 +251,37 @@ Direct owner feedback on the live dashboard, addressed same day:
     standing Lessons, which existed in Notion but were never rendered anywhere.
   - Old self-grading "How often it's been right" line chart removed (already flagged
     unhelpful); its slot became the "Beating the market?" panel from earlier the same day.
+
+## 2026-08-11 (part 3) / 2026-08-12 — self-incentive step, personalization, honest research dead-end
+- **Run 1 gains a self-incentive check**, the last sub-step of STEP 1: states whether
+  today's Accuracy % cleared a 75% bar in one OUTPUT line, then feeds that into how
+  strictly STEP 1.5's lessons get applied and the boundary-case bull/bear check — a
+  run of sub-75% days should visibly tighten standards over following days rather than
+  just get noted. Edited into `agent/routine_prompt.md` and
+  `agent/RUN1_prompt_ready_to_paste.txt`; **not yet pushed to the live Run 1 routine** —
+  needs a `/schedule` RemoteTrigger `update` before it takes effect server-side.
+- **Dashboard personalization**: a per-viewer holdings toggle (`OwnBadge.tsx`,
+  localStorage only, no accounts) labels each call as owned or not; a sector board
+  (`SectorBoard.tsx`, `lib/sectors.ts`) rolls the 26 up into per-sector
+  Bullish/Bearish/Mixed mood; a dynamic entry-window banner flags the 9:15-11:00 AM IST
+  buying window vs a stale 8:30 AM verdict later in the day; a 7-day date filter
+  (`DateFilter.tsx`) was added to the lookup tab.
+- **Experimental trend-forecasting research** (`backtest/train_ml_trend.py`,
+  `train_arima_trend.py`, `train_lstm_trend.py`): five honest attempts at 15/5-day
+  directional forecasting (gradient boosting, ARIMA, GBM with richer features, LSTM).
+  None beat a naive baseline on walk-forward accuracy. Initially the GBM output was
+  wired into the dashboard (clearly labeled experimental, with its real accuracy shown);
+  it and its per-stock chip were then **removed from the UI entirely** the next day —
+  the walk-forward numbers weren't good enough to surface prominently. Scripts and
+  output JSON stay in the repo as an honest research record, just not rendered.
+- **Dashboard UI fixes**: a real Chromium paint bug in the accordion collapse (`0fr`
+  grid) animation — a closed section with flex-wrap children (sector chips, KPI grid)
+  could still paint a sliver of content below the header even though layout reported
+  0 height; fixed with a `visibility` guard alongside the existing overflow/height
+  collapse. Also removed the now-redundant accuracy mood badge (duplicated the Accuracy
+  KPI card) and a duplicate standalone Gold & Silver panel (GOLDBEES/SILVERBEES already
+  appear under Today's calls like every other instrument); "Browse a past day" and
+  "Yesterday's scorecard" became collapsible dropdowns to match the rest of the app.
 
 ## The exact routine prompts
 Run 1's verbatim prompt is mirrored in [`agent/routine_prompt.md`](agent/routine_prompt.md)
