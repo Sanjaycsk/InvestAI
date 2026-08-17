@@ -112,12 +112,6 @@ function entryWindowIST(): { phase: "before" | "window" | "late" | "closed"; tex
   return { phase: "closed", text: "Market's closed for the day — see the 3 PM de-risk check below for what happened." };
 }
 
-const VERDICT_WORD: Record<string, string> = {
-  BUY: "Buy",
-  SELL: "Sell / avoid",
-  HOLD: "Hold",
-};
-
 // Conviction-weighted allocation across a basket (by composite score),
 // rounded to whole percents that sum to 100 (largest-remainder method).
 function allocations(recs: Rec[]): number[] {
@@ -510,8 +504,9 @@ export default async function Page() {
         </div>
         <div className={`kpi-hero-val ${pnlTone}`}>{signed(kpi.strategyPnl)}</div>
         <div className="kpi-hint">
-          compounded, equal-weight, if you&apos;d followed all {kpi.gradedCount}{" "}
-          graded calls
+          compounded, equal-weight, across the {kpi.pnlCallCount} Buy/Sell call
+          {kpi.pnlCallCount === 1 ? "" : "s"} you could have acted on (of{" "}
+          {kpi.gradedCount} graded — Hold calls sit flat and don&apos;t move this)
         </div>
         {kpi.dataErrors > 0 ? (
           <div className="kpi-hint warn">

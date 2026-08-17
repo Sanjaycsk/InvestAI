@@ -3,7 +3,11 @@ import { AUTH_COOKIE, isValidSession } from "./lib/auth";
 
 // Protect everything except the login page, the auth API, and static assets.
 export const config = {
-  matcher: ["/((?!login|api/login|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons/).*)"],
+  // offline.html is listed so the service worker can precache it without the
+  // auth redirect turning it into a copy of the login page.
+  matcher: [
+    "/((?!login|api/login|_next/static|_next/image|favicon.ico|manifest.json|sw.js|offline.html|icons/).*)",
+  ],
 };
 
 export function middleware(req: NextRequest) {
