@@ -98,8 +98,18 @@ def execute_recommendation(
 ) -> ExecutionResult:
     """
     Called by the bot AFTER the human approves. Re-validates everything from
-    scratch — never trusts that approval implies safety.
+    scratch — never trusts that approval implies safety, and never trusts the
+    caller's word that approval happened at all: the stored status is re-read
+    here rather than taken from the passed-in object, so a stale in-memory
+    Recommendation cannot be replayed into an order.
     """
+    stored = db.get_recommendation(rec.recommendation_id)
+    if stored is None or stored.status is not RecStatus.APPROVED:
+        found = "unknown" if stored is None else stored.status.value
+        msg = f"refusing to execute {rec.ticker}: stored status is {found}, not APPROVED."
+        log.warning(msg)
+        return ExecutionResult(False, False, RecStatus.REJECTED, msg)
+
     side = _side_for(rec.recommended_action)
     if side is None:
         msg = f"{rec.recommended_action.value} is not a tradable action."

@@ -60,6 +60,17 @@ TICKER_ALIASES: dict[str, list[str]] = {
     "BPCL": ["bpcl", "bharat petroleum", "bharath petroleum"],
     "DLF": ["dlf"],
     "PIDILITIND": ["pidilite", "fevicol"],
+    # The rest of the live 26-instrument universe (see AGENT.md). These were
+    # missing, so news/transcripts discussing them were silently invisible to
+    # the discovery pipeline even though the agent tracks them daily.
+    "FEDERALBNK": ["federal bank", "federalbnk"],
+    "SUZLON": ["suzlon", "suzlon energy"],
+    "WAAREEENER": ["waaree", "waaree energies", "waareeener"],
+    "BEL": ["bharat electronics", "bel"],
+    "BHEL": ["bhel", "bharat heavy electricals"],
+    "GROWWN200": ["growwn200", "groww nifty 200"],
+    "GOLDBEES": ["goldbees", "gold bees"],
+    "SILVERBEES": ["silverbees", "silver bees"],
 }
 
 
@@ -112,6 +123,14 @@ COMPANY_NAMES: dict[str, str] = {
     "BPCL": "Bharat Petroleum Corporation Ltd",
     "DLF": "DLF Ltd",
     "PIDILITIND": "Pidilite Industries Ltd",
+    "FEDERALBNK": "The Federal Bank Ltd",
+    "SUZLON": "Suzlon Energy Ltd",
+    "WAAREEENER": "Waaree Energies Ltd",
+    "BEL": "Bharat Electronics Ltd",
+    "BHEL": "Bharat Heavy Electricals Ltd",
+    "GROWWN200": "Groww Nifty 200 ETF",
+    "GOLDBEES": "Nippon India ETF Gold BeES",
+    "SILVERBEES": "Nippon India ETF Silver BeES",
 }
 
 

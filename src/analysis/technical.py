@@ -41,6 +41,11 @@ def assess_trend(
 
     `held_qty` (current holding size) lets us suggest a sensible REDUCE quantity
     for a red flag; for non-holdings it stays 0 and the action is WATCH/HOLD.
+
+    Note on hysteresis: `SMA_RED_FLAG_BUFFER` defaults to 0.0, so out of the
+    box ANY close below the SMA flips the flag RED — a price oscillating
+    around the line will flap day to day. Set it (e.g. 0.01 for a 1% band) if
+    you want a dead zone around the crossing.
     """
     window = window or config.SMA_WINDOW
     last_close = float(closes.iloc[-1]) if len(closes) else None
@@ -80,9 +85,22 @@ def assess_trend(
         rec.flag = Flag.GREEN
         rec.recommended_action = Action.HOLD if held_qty > 0 else Action.WATCH
         rec.sentiment_score = round(min(1.0, gap_pct / 20.0), 3)
-        rec.rationale = (
-            f"🟢 Above long-term trend — last close ₹{last_close:,.2f} is "
-            f"{gap_pct:.1f}% ABOVE the {window}-day SMA (₹{sma:,.2f})."
-        )
+        if gap_pct >= 0:
+            rec.rationale = (
+                f"🟢 Above long-term trend — last close ₹{last_close:,.2f} is "
+                f"{gap_pct:.1f}% ABOVE the {window}-day SMA (₹{sma:,.2f})."
+            )
+        else:
+            # Below the SMA, but inside SMA_RED_FLAG_BUFFER's dead zone. Saying
+            # "-0.5% ABOVE" here would be plainly wrong; the close IS below the
+            # line, it just hasn't cleared the buffer that flags a weakening
+            # trend.
+            buffer_pct = config.SMA_RED_FLAG_BUFFER * 100.0
+            rec.rationale = (
+                f"🟢 Trend intact — last close ₹{last_close:,.2f} is "
+                f"{abs(gap_pct):.1f}% below the {window}-day SMA (₹{sma:,.2f}), "
+                f"inside the {buffer_pct:.1f}% buffer, so the long-term trend "
+                "is not flagged as weakening."
+            )
 
     return rec
