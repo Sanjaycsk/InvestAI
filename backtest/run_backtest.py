@@ -3,7 +3,7 @@ InvestAI — one-shot historical backtest (technical baseline).
 
 This is NOT a replay of the live Claude agent (that would be cost-prohibitive and
 risk look-ahead bias on fundamentals). It is an honest, deterministic
-trend+momentum strategy over the same 24-instrument universe, graded with the
+trend+momentum strategy over the same 26-instrument universe, graded with the
 SAME thresholds the live agent uses, and benchmarked against simply holding
 NIFTY 50. It answers the question that actually matters: "would systematically
 trading these names have beaten buy-and-hold?"
