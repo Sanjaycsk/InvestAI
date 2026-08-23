@@ -1,7 +1,7 @@
 # InvestAI — Self-Grading Stock Research Agent
 
 A multi-run, **autonomous** equity-research agent built on **Claude (Anthropic)**. On
-every trading day it issues a **BUY / HOLD / SELL** verdict on a fixed 26-instrument NSE
+every trading day it issues a **BUY / HOLD / SELL** verdict on a fixed 31-instrument NSE
 watchlist before the open, re-checks that thesis as the day plays out, and **grades its
 own previous calls against what actually happened** — with every decision logged and
 auditable.
@@ -23,7 +23,7 @@ The rhythm is **anticipate → confirm → de-risk**:
 
 | Run | Time | What it does |
 | --- | --- | --- |
-| **1 · Pre-market** | 08:30 | Full analysis. Grades yesterday, learns, then scores all 26 and logs today's **BUY/HOLD/SELL**. This is the **verdict of record**. |
+| **1 · Pre-market** | 08:30 | Full analysis. Grades yesterday, learns, then scores all 31 and logs today's **BUY/HOLD/SELL**. This is the **verdict of record**. |
 | **2 · Confirm** | 10:00 | Light delta-check ~30 min after the open: does the morning thesis still hold? Folds in a friend's Notion notes. Annotates only. |
 | **3 · De-risk** | 15:00 | Light check ~30 min before the close: exit/trim only a position whose thesis has **materially broken**, so an overnight gap can't hurt. |
 
@@ -102,17 +102,20 @@ See [`AGENT.md`](AGENT.md) for every routine ID, schema, and the exact wiring.
 
 ---
 
-## The 26 instruments (fixed universe, NSE)
+## The 31 instruments (fixed universe, NSE)
 
-**Equities (23):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
+**Equities (28):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
 HINDUNILVR, LT, MARUTI, SUNPHARMA, TATASTEEL, SBIN, FEDERALBNK, SUZLON, TATAPOWER,
-WAAREEENER, NTPC, ADANIENT, BEL, BHEL, VEDL, BPCL
+WAAREEENER, NTPC, ADANIENT, BEL, BHEL, VEDL, BPCL, HINDZINC, VAML, VOGL, VEDPOWER, VISL
 **Index ETF (1):** GROWWN200 (Groww Nifty 200 ETF — market proxy)
 **Commodity ETFs (2):** GOLDBEES (Gold), SILVERBEES (Silver)
 
+The last 5 equities are the Vedanta Group, added 2026-08-17 — see [`AGENT.md`](AGENT.md)'s
+changelog.
+
 The dashboard's "Beating the market?" panel compares paper performance against the
 **real Nifty 50 index** (`benchmarks.NIFTY50` in the price feed) where it's been logged,
-falling back to GROWWN200 (a Nifty 200 ETF, also in the 26) on older days.
+falling back to GROWWN200 (a Nifty 200 ETF, also in the 31) on older days.
 
 ---
 

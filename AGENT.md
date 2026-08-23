@@ -12,12 +12,11 @@ All crons are **UTC**; the local time is **IST** (UTC+5:30). All run **weekdays 
 (see list below).
 
 Routine names shown here are the friendly labels; the **actual name in the claude.ai
-routines UI** is in the "UI name" column. Keep the UI names' instrument count in sync
-(rename "(24 instruments)" → "(26 instruments)" after the VEDL/BPCL change).
+routines UI** is in the "UI name" column.
 
 | Routine | UI name (claude.ai) | id | cron (UTC) | IST | Role |
 | --- | --- | --- | --- | --- | --- |
-| **Run 1 · Pre-market** | `InvestAI Daily Agent (26 instruments)` | `trig_01SYmjbgEdjKHhQpFozrfJjZ` | `0 3 * * 1-5` | 08:30 | grade yesterday (+ mgmt alpha) → learn → analyze 26 → log verdict (frozen) → **STEP 4 coffee debate** |
+| **Run 1 · Pre-market** | `InvestAI Daily Agent (31 instruments)` | `trig_01SYmjbgEdjKHhQpFozrfJjZ` | `0 3 * * 1-5` | 08:30 | grade yesterday (+ mgmt alpha) → learn → analyze 31 → log verdict (frozen) → **STEP 4 coffee debate** |
 | **Run 2 · Confirm** | _(confirm in UI)_ | `trig_01JJVmRfagEaGxnLpUNgNa8f` | `30 4 * * 1-5` | 10:00 | delta-check vs morning thesis; reads friend Inputs; annotates `Run2*` → **coffee debate** |
 | **Run 3 · De-risk** | _(confirm in UI)_ | `trig_018n6MbVkChwJmf13aDWqm2W` | `30 9 * * 1-5` | 15:00 | exit/trim only on a material break; annotates `Run3*` + `Exit Price` → **coffee debate** |
 
@@ -30,13 +29,23 @@ Each routine's `session_context.allowed_tools` **must** keep `mcp__Notion` (the 
 connector is attached to all six). `job_config` updates replace the whole object, so
 resend the full prompt verbatim when editing.
 
-## The 26 instruments (fixed universe, NSE)
-**Equities (23):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
+## The 31 instruments (fixed universe, NSE)
+**Equities (28):** RELIANCE, HDFCBANK, ICICIBANK, TCS, INFY, BHARTIARTL, ITC,
 HINDUNILVR, LT, MARUTI, SUNPHARMA, TATASTEEL, SBIN, FEDERALBNK, SUZLON,
-TATAPOWER, WAAREEENER, NTPC, ADANIENT, BEL, BHEL, VEDL, BPCL.
+TATAPOWER, WAAREEENER, NTPC, ADANIENT, BEL, BHEL, VEDL, BPCL, HINDZINC, VAML,
+VOGL, VEDPOWER, VISL.
 **Index ETF (1):** GROWWN200 (Groww Nifty 200 ETF — broad-market proxy).
 **Commodity ETFs (2):** GOLDBEES (Gold ETF), SILVERBEES (Silver ETF).
 No other tickers are ever referenced — the Replacement-Stock agent is disabled.
+
+HINDZINC, VAML, VOGL, VEDPOWER, VISL are the Vedanta Group (added 2026-08-17,
+live since 2026-08-22 — see changelog). VEDL is
+the post-demerger residual entity (critical minerals, anchored by its
+Hindustan Zinc stake); HINDZINC, VAML, VOGL, VEDPOWER, VISL are separately
+listed group companies. HINDZINC has a long NSE trading history; the other
+four listed 2026-06-15 in Vedanta's four-way demerger and so have <3 months of
+price history — the routine prompt tells the model to weight technicals less
+for those until a longer track record exists.
 
 ## Trading-day gate (NSE 2026 holidays)
 Every run skips weekends and these dates (prints "Market holiday — skipped" and exits):
@@ -68,7 +77,7 @@ Every run skips weekends and these dates (prints "Market holiday — skipped" an
 
 **Inputs (Run 2 — 10:00 IST)** — `a8288c20-969a-4962-a016-1fadd1f3738f`
 - A friend drops free-text market notes here: **Info**(title) + **Date**(created_time, auto).
-  Run 2 reads today's rows, keeps only ones touching the 26 (ignores other tickers),
+  Run 2 reads today's rows, keeps only ones touching the 31 (ignores other tickers),
   treats them as soft signal.
 
 **Coffee Shop (Run 1 panel)** — `fee73e14-f1c4-48b7-a285-c319ccb781b7`
@@ -96,7 +105,7 @@ Watchlist (60-70) → HOLD · Hold (45-60) → HOLD · Avoid/Sell (<45) → SELL
 
 ## Data sources
 - Prices / technicals: **PRIMARY = `prices.json`**, the home-published clean
-  yfinance EOD feed (close/prev/DMA20-50-200/RSI14/52w/recent_closes for all 26 +
+  yfinance EOD feed (close/prev/DMA20-50-200/RSI14/52w/recent_closes for all 31 +
   a NIFTY benchmark) at
   `https://raw.githubusercontent.com/Sanjaycsk/youtube-stock-reader/main/data/prices.json`
   — produced by `youtube-stock-reader/fetch_prices.py` (same home-PC bridge as the
@@ -119,7 +128,7 @@ sub-step, which sets how strictly today's lessons get applied) → Daily Review 
 STEP 1.5 learn from recent reviews · STEP 2 per-type 6-factor score → category → verdict
 · STEP 3 log one Recommendations row per instrument (overwrite-safe; verdict frozen) ·
 STEP 4 coffee debate (Pre-market).
-**Run 2 (10:00)** — gate · load today's verdicts · read friend Inputs (today, our 26
+**Run 2 (10:00)** — gate · load today's verdicts · read friend Inputs (today, our 31
 only) · pull intraday prices · write `Run2 Status/Action/Note/Price` (mostly "Intact / None")
 · STEP 4 coffee debate (Confirm).
 **Run 3 (15:00)** — gate · load verdicts + Run 2 reads · exit/trim only on a material
@@ -262,7 +271,7 @@ Direct owner feedback on the live dashboard, addressed same day:
   needs a `/schedule` RemoteTrigger `update` before it takes effect server-side.
 - **Dashboard personalization**: a per-viewer holdings toggle (`OwnBadge.tsx`,
   localStorage only, no accounts) labels each call as owned or not; a sector board
-  (`SectorBoard.tsx`, `lib/sectors.ts`) rolls the 26 up into per-sector
+  (`SectorBoard.tsx`, `lib/sectors.ts`) rolls the 31 up into per-sector
   Bullish/Bearish/Mixed mood; a dynamic entry-window banner flags the 9:15-11:00 AM IST
   buying window vs a stale 8:30 AM verdict later in the day; a 7-day date filter
   (`DateFilter.tsx`) was added to the lookup tab.
@@ -282,6 +291,40 @@ Direct owner feedback on the live dashboard, addressed same day:
   KPI card) and a duplicate standalone Gold & Silver panel (GOLDBEES/SILVERBEES already
   appear under Today's calls like every other instrument); "Browse a past day" and
   "Yesterday's scorecard" became collapsible dropdowns to match the rest of the app.
+
+## 2026-08-17 — Vedanta Group added to the watchlist (26 → 31 instruments)
+- **Added 5 tickers**: HINDZINC (Hindustan Zinc — long-listed, majority-owned by
+  Vedanta), and the four companies from Vedanta Ltd's 2026-06-15 four-way demerger —
+  VAML (Vedanta Aluminium Metal), VOGL (Vedanta Oil & Gas), VEDPOWER (Vedanta Power),
+  VISL (Vedanta Iron & Steel). VEDL itself (already tracked) is the post-demerger
+  residual entity. The four new spin-offs have <3 months of trading history as of this
+  change — the routine prompt's Fundamental guidance tells the model to weight
+  technicals less for them until a longer track record exists.
+- **Edited locally**: `agent/routine_prompt.md`, `agent/RUN1/RUN2/RUN3_prompt_ready_to_paste.txt`
+  (ticker list, instrument counts 26→31/23→28, and Fundamental sector guidance for
+  Metals/Mining, Industrials/Power, and a new Oil & Gas E&P line), this file's
+  canonical instrument list, `dashboard/lib/sectors.ts` (new tickers mapped to
+  metals/energy/power), and `src/analysis/tickers.py` (discovery aliases + company
+  names for all 5, unrelated to the fixed watchlist but kept in sync).
+- **DONE 2026-08-22**: pushed live to all three routines via `RemoteTrigger action=update`
+  (Run 1 renamed to "InvestAI Daily Agent (31 instruments)"), and added the 5 new
+  `Ticker` select options to the live Recommendations database via
+  `notion-update-data-source`. **Caveat**: the update call silently normalized all
+  three routines' `session_context.allowed_tools` to a `preset:default`-based list that
+  no longer names `mcp__Notion` literally (previously an explicit array including it);
+  `mcp_connections` still shows the Notion connector attached with unrestricted
+  `permitted_tools`, so this is expected to be fine, but **verify Monday 2026-08-24's
+  Run 1 actually wrote to Notion** (`RemoteTrigger action=list_runs` /
+  `get_run_log`) before trusting this fully.
+- **NOT yet done** (owner action needed):
+  1. **Home price feed** — `prices.json` (published by `youtube-stock-reader/fetch_prices.py`
+     on the home machine, a separate repo) needs these 5 tickers added to whatever list
+     it fetches, or Run 1 will fall back to web quotes for them every day instead of the
+     verified EOD feed — workable but more fragile, and defeats the point of
+     `prices.json` as the primary source.
+  2. `backtest/run_backtest.py` and `backtest/train_ml_trend.py` still hardcode the old
+     26-name universe; leave as-is until the new tickers have enough Notion history to
+     be worth including in a backtest.
 
 ## The exact routine prompts
 Run 1's verbatim prompt is mirrored in [`agent/routine_prompt.md`](agent/routine_prompt.md)

@@ -27,7 +27,7 @@ Two tabs: **📊 Today** and **🔍 Look up a stock**.
 - **🛡️ Sold before the close** — the day's Run 3 de-risk exits
 - **Yesterday's calls** with graded outcomes (✓ / ✗) and actual move %
 
-**Look up a stock** — pick any of the 26 names and see: today's call and full reasoning,
+**Look up a stock** — pick any of the 31 names and see: today's call and full reasoning,
 **yesterday's call and whether it worked**, that stock's **own accuracy track record**
 over the whole run (not just the system-wide number), and what the six coffee-shop
 friends think of it (folded in here instead of living on its own tab). "Browse a past

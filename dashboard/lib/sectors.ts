@@ -1,8 +1,8 @@
-// Static sector map for the 26-instrument watchlist. Mirrors the
+// Static sector map for the 31-instrument watchlist. Mirrors the
 // sector-appropriate groupings already used by the routine prompt's
 // Fundamental scoring guidance (agent/routine_prompt.md STEP 2), so "sector"
 // here means the same thing the model already reasons about — not a new
-// taxonomy invented for the dashboard. Small watchlist (26 names), so this
+// taxonomy invented for the dashboard. Small watchlist (31 names), so this
 // is a plain lookup table rather than pulled from an external classifier.
 //
 // Extend as the watchlist grows: anything not listed falls into "Other".
@@ -80,13 +80,18 @@ const TICKER_SECTOR: Record<string, SectorKey> = {
   // Metals & Mining
   TATASTEEL: "metals",
   VEDL: "metals",
+  HINDZINC: "metals",
+  VAML: "metals",
+  VISL: "metals",
   // Oil, Gas & Energy (incl. diversified energy conglomerate)
   RELIANCE: "energy",
   BPCL: "energy",
   ADANIENT: "energy",
+  VOGL: "energy",
   // Power & Utilities
   NTPC: "power",
   TATAPOWER: "power",
+  VEDPOWER: "power",
   // Industrials & Capital Goods
   LT: "industrials",
   BHEL: "industrials",
