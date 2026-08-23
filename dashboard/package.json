@@ -2,7 +2,7 @@
   "name": "investai-dashboard",
   "version": "1.0.0",
   "private": true,
-  "description": "Mobile PWA dashboard for the InvestAI 12-stock daily agent (reads live from Notion)",
+  "description": "Mobile PWA dashboard for the InvestAI 26-instrument daily agent (reads live from Notion)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

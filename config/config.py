@@ -121,7 +121,10 @@ MAX_RISK_PER_TRADE_INR = _as_float(os.getenv("MAX_RISK_PER_TRADE_INR"), 1_000.0)
 # ----------------------------------------------------------------------
 SMA_WINDOW = _as_int(os.getenv("SMA_WINDOW"), 200)
 # A holding is "Trend Weakening" when its close is more than this fraction
-# below the SMA (small buffer avoids flapping right at the line).
+# below the SMA. A non-zero value (e.g. 0.01 = 1%) creates a dead zone that
+# stops the flag flapping on a price oscillating around the line. It defaults
+# to 0.0 — i.e. NO hysteresis, any close below the SMA is RED — so raise it
+# deliberately rather than assuming a buffer is already in effect.
 SMA_RED_FLAG_BUFFER = _as_float(os.getenv("SMA_RED_FLAG_BUFFER"), 0.0)
 TIMEZONE = os.getenv("TIMEZONE", "Asia/Kolkata")
 DEFAULT_EXCHANGE = os.getenv("DEFAULT_EXCHANGE", "NSE")

@@ -17,8 +17,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
+  // Without a session secret the cookie we'd set is empty, isValidSession()
+  // rejects it, and middleware bounces straight back here — an invisible
+  // redirect loop that looks like "the right passcode doesn't work". Fail
+  // loudly on the misconfiguration instead of handing out a dud session.
+  const secret = sessionSecret();
+  if (!secret) {
+    console.error("DASHBOARD_SESSION_SECRET is not set — cannot issue a session.");
+    return NextResponse.json(
+      { ok: false, error: "Server is missing DASHBOARD_SESSION_SECRET." },
+      { status: 500 }
+    );
+  }
+
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(AUTH_COOKIE, sessionSecret(), {
+  res.cookies.set(AUTH_COOKIE, secret, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

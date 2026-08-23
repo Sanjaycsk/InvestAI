@@ -2,6 +2,8 @@
 // Talks to the Notion REST API directly (no SDK) using the data-source query
 // endpoint, so it stays correct under Notion's multi-source data model.
 
+import { unstable_cache } from "next/cache";
+
 const NOTION_API = "https://api.notion.com/v1";
 const NOTION_VERSION = "2025-09-03";
 
@@ -54,16 +56,51 @@ const pText = (p: any) =>
 const pTitle = (p: any) =>
   (p?.title ?? []).map((t: any) => t.plain_text).join("") || null;
 
+// Ticker is stored as a `select` in Recommendations but was read as rich_text
+// in Coffee Shop — and a mismatched reader returns null, which silently drops
+// the whole row at the filter step rather than erroring. Read whichever
+// text-bearing shape the property actually is, so neither table can go quietly
+// empty after a schema tweak.
+const pAnyText = (p: any): string | null => pSelect(p) ?? pText(p) ?? pTitle(p);
+
 // The agent is supposed to score 0-100, but on some days it logs on a 0-10
 // scale instead (e.g. a BUY at 7.05 instead of 70.5), which then rendered as
-// an alarming "confidence 7/100" next to a Buy verdict. Normalise any 0-10
-// value up to the 0-100 scale so the number always matches the Category bands
-// (Strong Buy >80, Buy 70-80, Hold 45-60, Sell <45). The real fix is in the
-// routine prompt (enforce integer 0-100); this keeps old + stray rows sane.
-const pScore = (p: any): number | null => {
+// an alarming "confidence 7/100" next to a Buy verdict.
+//
+// Rescaling every value in (0, 10] unconditionally is NOT safe: a genuine
+// 0-100 score of 8 is a deep Avoid/Sell, and multiplying it by 10 renders it
+// as 80 — a "Strong Buy". The value alone can't tell the two cases apart, so
+// the Category the agent logged alongside it is used as the tie-breaker:
+// rescale only when x10 lands inside that Category's band and the raw value
+// does not. With no Category to check against, the logged number is trusted
+// as-is. The real fix is in the routine prompt (enforce integer 0-100); this
+// keeps old + stray rows sane without inventing conviction that wasn't there.
+const CATEGORY_BANDS: Record<string, [number, number]> = {
+  "Strong Buy": [80, 100],
+  "Buy on Dip": [70, 80],
+  Watchlist: [60, 70],
+  Hold: [45, 60],
+  "Avoid/Sell": [0, 45],
+};
+
+const pScore = (p: any, category: string | null): number | null => {
   const n = pNumber(p);
   if (n === null) return null;
-  return n > 0 && n <= 10 ? Math.round(n * 10) : Math.round(n);
+  if (n <= 0 || n > 10) return Math.round(n);
+
+  const band = category ? CATEGORY_BANDS[category] : undefined;
+  if (!band) return Math.round(n);
+
+  const inBand = (v: number) => v >= band[0] && v <= band[1];
+  if (inBand(n * 10) && !inBand(n)) {
+    console.warn(
+      `[notion] rescaled a 0-10-scale Composite Score: ${n} -> ${Math.round(
+        n * 10
+      )} (Category "${category}")`
+    );
+    return Math.round(n * 10);
+  }
+  return Math.round(n);
 };
 
 // ---- typed shapes ----
@@ -148,13 +185,14 @@ export type Review = {
 
 function mapRec(page: any): Rec {
   const pr = page.properties;
+  const category = pSelect(pr["Category"]);
   return {
-    ticker: pSelect(pr["Ticker"]),
+    ticker: pAnyText(pr["Ticker"]),
     company: pText(pr["Company"]),
     date: pDate(pr["Date"]),
     verdict: pSelect(pr["Verdict"]),
-    category: pSelect(pr["Category"]),
-    compositeScore: pScore(pr["Composite Score"]),
+    category,
+    compositeScore: pScore(pr["Composite Score"], category),
     refPrice: pNumber(pr["Ref Price"]),
     expectedDirection: pSelect(pr["Expected Direction"]),
     outcome: pSelect(pr["Outcome"]),
@@ -211,7 +249,7 @@ function mapCoffee(page: any): CoffeeOpinion {
   const pr = page.properties;
   return {
     date: pDate(pr["Date"]),
-    ticker: pText(pr["Ticker"]),
+    ticker: pAnyText(pr["Ticker"]),
     persona: pSelect(pr["Persona"]),
     stance: pSelect(pr["Stance"]),
     horizon: pSelect(pr["Horizon"]),
@@ -248,9 +286,9 @@ export type Dashboard = {
   reviews: Review[]; // ascending by date, for the chart
   kpi: {
     accuracy: number | null; // latest review accuracy
-    accuracy7d: number | null; // mean of last 7 reviews
     selfRating: number | null;
     strategyPnl: number | null; // paper: +move on BUY, -move on SELL, graded only
+    pnlCallCount: number; // BUY/SELL calls actually behind strategyPnl (HOLDs and bad-data rows excluded)
     mgmtAlpha: number | null; // cumulative % saved by Run 3 de-risk exits (separate from forecast)
     bestStock: { ticker: string; hitRate: number; n: number } | null;
     correctStreak: number; // consecutive latest reviews with accuracy >= 50
@@ -287,9 +325,11 @@ export type Dashboard = {
   error?: string;
 };
 
-function distinctDatesDesc(recs: Rec[]): string[] {
+// Anything carrying a Date — Recs and CoffeeOpinions alike — so callers don't
+// have to cast one shape into the other just to reuse this.
+function distinctDatesDesc(rows: { date: string | null }[]): string[] {
   const set = new Set<string>();
-  for (const r of recs) if (r.date) set.add(r.date);
+  for (const r of rows) if (r.date) set.add(r.date);
   return [...set].sort((a, b) => (a < b ? 1 : -1));
 }
 
@@ -389,7 +429,24 @@ function computeSentiment(
   };
 }
 
-export async function getDashboard(): Promise<Dashboard> {
+// Only the single most recent Coffee Shop date is ever rendered, but that
+// table grows fastest of the three (6 personas x ~5 shortlisted tickers x 3
+// runs per day), so pulling its whole history was the biggest wasted cost in
+// this function. A generous lookback covers long weekends and holiday gaps
+// while still bounding the fetch to a page or two.
+const COFFEE_LOOKBACK_DAYS = 14;
+
+function isoDaysAgo(days: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+// NB: Recommendations and Daily Review are deliberately NOT date-filtered.
+// The whole graded history feeds tickerStats, priceHistory, strategyPnl,
+// marketAlpha and accuracyTrackRecord — narrowing the window here would
+// silently change every headline number on the dashboard.
+async function buildDashboard(): Promise<Dashboard> {
   try {
     const [recPages, reviewPages, coffeePages] = await Promise.all([
       queryAll(RECS_DS, {
@@ -400,6 +457,10 @@ export async function getDashboard(): Promise<Dashboard> {
       }),
       // New, optional feature — never let a Coffee Shop hiccup break the page.
       queryAll(COFFEE_DS, {
+        filter: {
+          property: "Date",
+          date: { on_or_after: isoDaysAgo(COFFEE_LOOKBACK_DAYS) },
+        },
         sorts: [{ property: "Date", direction: "descending" }],
       }).catch(() => [] as any[]),
     ]);
@@ -411,9 +472,7 @@ export async function getDashboard(): Promise<Dashboard> {
     const coffeeAll = coffeePages
       .map(mapCoffee)
       .filter((c) => c.date && c.ticker && c.persona);
-    const coffeeDate = distinctDatesDesc(
-      coffeeAll.map((c) => ({ date: c.date } as Rec))
-    )[0] ?? null;
+    const coffeeDate = distinctDatesDesc(coffeeAll)[0] ?? null;
     const coffee = coffeeDate
       ? coffeeAll.filter((c) => c.date === coffeeDate)
       : [];
@@ -455,9 +514,6 @@ export async function getDashboard(): Promise<Dashboard> {
     const latestReview = reviews[reviews.length - 1] ?? null;
     const sentiment = computeSentiment(todayAll, latestReview);
     const accuracy = latestReview?.accuracy ?? null;
-    const accuracy7d = mean(
-      reviews.slice(-7).map((r) => r.accuracy ?? NaN)
-    );
     const selfRating = latestReview?.selfRating ?? null;
 
     // Paper strategy P&L, expressed as a REAL return.
@@ -478,7 +534,12 @@ export async function getDashboard(): Promise<Dashboard> {
       (r) => r.outcome === "Correct" || r.outcome === "Wrong"
     );
     const movers = graded.filter((r) => typeof r.actualMove === "number");
-    const MAX_PLAUSIBLE_DAILY_MOVE = 20; // % — beyond this is a bad Ref Price, not a real day
+    // % — beyond this is a bad Ref Price, not a real day. Kept in step with the
+    // agent's own ref-price sanity gate, which AGENT.md's 2026-08 audit
+    // tightened from ±20% to ±15% precisely because ±20% was letting bad rows
+    // through (WAAREEENER +934%, HDFCBANK -59%). A looser gate here would mean
+    // the dashboard's P&L still ingests moves the agent itself now rejects.
+    const MAX_PLAUSIBLE_DAILY_MOVE = 15;
     const dataErrors = movers.filter(
       (r) => Math.abs(r.actualMove as number) > MAX_PLAUSIBLE_DAILY_MOVE
     ).length;
@@ -487,6 +548,12 @@ export async function getDashboard(): Promise<Dashboard> {
     );
 
     let strategyPnl: number | null = null;
+    // How many calls actually moved this number. NOT the same as graded.length:
+    // HOLD verdicts are flat by construction and implausible-move rows are
+    // dropped above, and together those are the large majority of graded rows.
+    // Quoting the full graded count next to this figure overstated its basis
+    // several times over.
+    let pnlCallCount = 0;
     if (clean.length) {
       const byDay = new Map<string, number[]>();
       for (const r of clean) {
@@ -497,6 +564,7 @@ export async function getDashboard(): Promise<Dashboard> {
         const bucket = byDay.get(r.date) ?? [];
         bucket.push(dayRet / 100);
         byDay.set(r.date, bucket);
+        pnlCallCount += 1;
       }
       let equity = 1;
       for (const day of [...byDay.keys()].sort()) {
@@ -518,11 +586,43 @@ export async function getDashboard(): Promise<Dashboard> {
     // already one of the 26 tracked instruments and needs no schema change —
     // used as the fallback so this comparison works today and upgrades itself
     // automatically once real Nifty data starts flowing in.
+    //
+    // DATE ALIGNMENT — the subtle part. Run 1 fires at 08:30 IST, before the
+    // open, so the prices.json it reads still carries the PREVIOUS trading
+    // day's close; `benchmarks.NIFTY50.change_pct` is therefore that previous
+    // day's move (the same day whose calls Step 1 is grading). The Daily
+    // Review row it writes is stamped with the run date. So a review row dated
+    // D carries the Nifty move for the trading day BEFORE D, and joining it
+    // straight onto strategy returns keyed by D would compare a day's calls
+    // against the wrong day's market.
+    //
+    // The GROWWN200 fallback below needs no such shift: it is keyed by the
+    // Recommendation row's own date, exactly like the strategy returns. Only
+    // the real-Nifty path is affected — which is why this had to be fixed
+    // BEFORE those columns start getting populated, not after.
+    //
+    // If it turns out a Daily Review row is dated with the day it GRADED
+    // rather than the day it RAN, flip this to false — that single fact is the
+    // whole assumption, and it is checkable against one populated row.
+    const NIFTY_MOVE_IS_FOR_PREVIOUS_TRADING_DAY = true;
+
+    const tradingDaysAsc = [...dates].sort();
+    const previousTradingDay = (d: string): string | null => {
+      let prev: string | null = null;
+      for (const t of tradingDaysAsc) {
+        if (t >= d) break;
+        prev = t;
+      }
+      return prev;
+    };
+
     const niftyByDate = new Map<string, number>();
     for (const r of reviews) {
-      if (r.date && typeof r.niftyMovePct === "number") {
-        niftyByDate.set(r.date, r.niftyMovePct);
-      }
+      if (!r.date || typeof r.niftyMovePct !== "number") continue;
+      const key = NIFTY_MOVE_IS_FOR_PREVIOUS_TRADING_DAY
+        ? previousTradingDay(r.date)
+        : r.date;
+      if (key) niftyByDate.set(key, r.niftyMovePct);
     }
     const growwn200ByDate = new Map<string, number>();
     for (const r of recs) {
@@ -614,8 +714,8 @@ export async function getDashboard(): Promise<Dashboard> {
     const trackRecordDays = gradedDates.size;
 
     // Track-record accuracy: every graded call weighted equally, over the
-    // whole run — different from `accuracy7d`, which averages each day's
-    // accuracy% and so treats a 1-call day the same as a 10-call day.
+    // whole run — different from a mean of each day's accuracy%, which would
+    // treat a 1-call day the same as a 10-call day.
     const accuracyTrackRecord = graded.length
       ? (graded.filter((r) => r.outcome === "Correct").length / graded.length) * 100
       : null;
@@ -692,9 +792,9 @@ export async function getDashboard(): Promise<Dashboard> {
       reviews,
       kpi: {
         accuracy,
-        accuracy7d,
         selfRating,
         strategyPnl,
+        pnlCallCount,
         mgmtAlpha,
         bestStock,
         correctStreak,
@@ -728,9 +828,9 @@ export async function getDashboard(): Promise<Dashboard> {
       reviews: [],
       kpi: {
         accuracy: null,
-        accuracy7d: null,
         selfRating: null,
         strategyPnl: null,
+        pnlCallCount: 0,
         mgmtAlpha: null,
         bestStock: null,
         correctStreak: 0,
@@ -753,5 +853,33 @@ export async function getDashboard(): Promise<Dashboard> {
       },
       error: e?.message ?? "Unknown error fetching Notion data",
     };
+  }
+}
+
+// The agent writes three times a day (08:30 / 10:00 / 15:00 IST), but every
+// page view used to re-crawl the entire Notion history — paid again in full
+// by /lookup, and growing by 26 rows a day forever. A short shared cache
+// window keeps the dashboard effectively live while collapsing repeat views
+// onto one crawl. Failures are rethrown rather than returned so a transient
+// Notion blip can't get pinned in the cache as an error card.
+const CACHE_TTL_SECONDS = 300;
+
+const loadDashboardCached = unstable_cache(
+  async (): Promise<Dashboard> => {
+    const d = await buildDashboard();
+    if (d.error) throw new Error(d.error);
+    return d;
+  },
+  ["investai-dashboard"],
+  { revalidate: CACHE_TTL_SECONDS }
+);
+
+export async function getDashboard(): Promise<Dashboard> {
+  try {
+    return await loadDashboardCached();
+  } catch (e: any) {
+    // buildDashboard already shapes a complete empty payload for this case;
+    // ask it again directly so the error card renders with real detail.
+    return await buildDashboard();
   }
 }

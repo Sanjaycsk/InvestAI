@@ -17,13 +17,16 @@ function LoginForm() {
   const params = useSearchParams();
   const next = params.get("next") || "/";
   const [passcode, setPasscode] = useState("");
-  const [error, setError] = useState(false);
+  // null = no error yet. A server misconfiguration (no session secret) must
+  // not be reported as "wrong passcode" — that sends someone hunting for a
+  // passcode that was right all along.
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(false);
+    setError(null);
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -33,10 +36,14 @@ function LoginForm() {
     if (res.ok) {
       router.replace(next);
       router.refresh();
-    } else {
-      setError(true);
-      setPasscode("");
+      return;
     }
+    setError(
+      res.status >= 500
+        ? "Server isn't set up correctly — sign-in is unavailable."
+        : "Wrong passcode — try again."
+    );
+    setPasscode("");
   }
 
   return (
@@ -56,7 +63,7 @@ function LoginForm() {
           placeholder="Passcode"
           className={error ? "input err" : "input"}
         />
-        {error && <p className="login-err">Wrong passcode — try again.</p>}
+        {error && <p className="login-err">{error}</p>}
         <button type="submit" disabled={loading || !passcode}>
           {loading ? "Checking…" : "Enter"}
         </button>

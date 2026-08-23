@@ -50,7 +50,7 @@ from train_ml_trend import (
 warnings.filterwarnings("ignore")
 
 HERE = Path(__file__).resolve().parent
-JSON_PATH = HERE.parent / "dashboard" / "data" / "lstm_trend.json"
+JSON_PATH = HERE / "results" / "lstm_trend.json"
 
 SEQ_LEN = 20  # trading days of feature history per input sequence (~1 month)
 # LSTM gets NUMERIC features only (no raw sector/ticker string categoricals —

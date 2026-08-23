@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
+from functools import lru_cache
 
 from config import config
 
@@ -53,7 +54,13 @@ class CalibrationBucket:
         return self.n >= MIN_RELIABLE_N
 
 
+@lru_cache(maxsize=1)
 def load_calibration() -> list[CalibrationBucket]:
+    """
+    Parsed calibration table. Cached: the file is a small static artifact
+    refit by hand every few months, and this is called once per scored
+    instrument. Call `load_calibration.cache_clear()` after a refit.
+    """
     try:
         with open(config.SCORE_CALIBRATION_PATH, "r", encoding="utf-8") as fh:
             raw = json.load(fh).get("buckets", [])
@@ -72,16 +79,32 @@ def calibrated_confidence(score: float) -> tuple[float, bool, str]:
     not the raw score, to scale conviction. `is_reliable` is False for
     thin/noisy buckets (n < MIN_RELIABLE_N); callers should cap position size
     when it's False regardless of how high the confidence number looks.
+
+    Bands are matched half-open, [score_min, score_max), so a score sitting
+    exactly on an edge (60, 70, 80...) belongs to exactly one bucket instead
+    of two — which bucket it landed in previously depended on file ordering.
+    The single highest band keeps an inclusive upper edge so a perfect 100
+    still matches.
     """
-    for bucket in load_calibration():
-        if bucket.score_min <= score <= bucket.score_max:
+    buckets = load_calibration()
+    if not buckets:
+        return _FALLBACK_CONFIDENCE, False, "score outside any calibrated band"
+
+    ceiling = max(b.score_max for b in buckets)
+    for bucket in buckets:
+        in_band = bucket.score_min <= score < bucket.score_max
+        on_ceiling = score == bucket.score_max == ceiling
+        if in_band or on_ceiling:
             return bucket.empirical_hit_rate, bucket.is_reliable, bucket.note
     return _FALLBACK_CONFIDENCE, False, "score outside any calibrated band"
 
 
+DEFAULT_BUCKET_EDGES: tuple[float, ...] = (0, 45, 60, 70, 80, 100)
+
+
 def refit_from_records(
     records: list[tuple[float, bool]],
-    bucket_edges: list[float] = (0, 45, 60, 70, 80, 100),
+    bucket_edges: tuple[float, ...] = DEFAULT_BUCKET_EDGES,
 ) -> list[dict]:
     """
     Recompute calibration buckets from fresh (composite_score, was_correct)
@@ -93,9 +116,16 @@ def refit_from_records(
     not auto-deployed).
     """
     edges = sorted(bucket_edges)
+    ceiling = edges[-1]
     buckets: list[dict] = []
     for lo, hi in zip(edges[:-1], edges[1:]):
-        in_band = [r for r in records if lo <= r[0] <= hi]
+        # Half-open [lo, hi) so a score on an edge is counted once, matching
+        # how calibrated_confidence() reads the table back; the top band keeps
+        # an inclusive upper edge.
+        in_band = [
+            r for r in records
+            if lo <= r[0] < hi or (hi == ceiling and r[0] == hi)
+        ]
         n = len(in_band)
         correct = sum(1 for _, ok in in_band if ok)
         buckets.append({

@@ -37,6 +37,25 @@ def test_green_flag_when_close_above_sma():
     assert rec.recommended_action is Action.HOLD
 
 
+def test_buffer_zone_close_is_not_described_as_above_the_sma(monkeypatch):
+    # With a non-zero buffer a close just BELOW the SMA stays GREEN (the trend
+    # isn't flagged as weakening yet) — but it must not be reported as being
+    # "ABOVE" the SMA, which is what the old single-branch wording did.
+    from config import config
+    from src.analysis import technical
+
+    monkeypatch.setattr(config, "SMA_RED_FLAG_BUFFER", 0.02)  # 2% dead zone
+
+    # Flat at 100, with the final close nudged to 99 — about 1% under the SMA,
+    # i.e. inside the 2% dead zone.
+    flat_then_dip = [100.0] * 399 + [99.0]
+    rec = technical.assess_trend("TESTBUFFER", _series(flat_then_dip))
+
+    assert rec.flag is Flag.GREEN
+    assert "ABOVE" not in rec.rationale
+    assert "below" in rec.rationale
+
+
 def test_sentiment_score_within_bounds():
     rising = _series(list(range(1, 401)))
     rec = assess_trend("TESTUP", rising)

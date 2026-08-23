@@ -122,6 +122,25 @@ def test_calibration_trusts_the_watchlist_band():
     assert is_reliable
 
 
+def test_calibration_bands_are_half_open_at_the_edges():
+    # 60 is the boundary between the Hold (45-60) and Watchlist (60-70)
+    # buckets. Half-open matching puts it in exactly one — Watchlist — rather
+    # than whichever happened to be listed first in the JSON.
+    edge, _, _ = calibrated_confidence(60)
+    watchlist, _, _ = calibrated_confidence(65)
+    hold, _, _ = calibrated_confidence(50)
+    assert edge == watchlist
+    assert edge != hold
+
+
+def test_calibration_still_matches_a_perfect_score():
+    # The top band keeps an inclusive upper edge, so 100 must not fall
+    # through to the neutral fallback.
+    confidence, _, note = calibrated_confidence(100)
+    assert "outside any calibrated band" not in note
+    assert confidence < 0.5  # the >80 band's real (terrible) hit rate
+
+
 # -------------------------------------------------------- position sizing
 def test_no_edge_means_no_trade():
     qty, confidence = position_size(price=1000.0, composite_score=85)  # Strong Buy band, 20% hit rate
@@ -158,6 +177,46 @@ def test_check_stop_loss_triggers_below_stop():
     )
     assert order_manager.check_stop_loss(rec, 94.0)
     assert not order_manager.check_stop_loss(rec, 96.0)
+
+
+def test_execute_refuses_a_recommendation_that_was_never_approved(monkeypatch, tmp_path):
+    # The execution layer must not take the caller's word for it: an idea
+    # sitting at PENDING (or one whose in-memory copy claims APPROVED while
+    # the store disagrees) must never reach the broker.
+    monkeypatch.setattr(config, "DB_PATH", str(tmp_path / "approval_state.db"))
+    db.init_db()
+
+    rec = Recommendation(
+        ticker="TEST", recommended_action=Action.BUY,
+        suggested_qty=1, price_at_analysis=100.0,
+    )
+    db.save_recommendation(rec)  # stored as PENDING
+
+    rec.status = RecStatus.APPROVED  # forged in-memory approval
+    result = order_manager.execute_recommendation(rec, kite=_FakeKite(100.0))
+
+    assert not result.ok
+    assert result.status is RecStatus.REJECTED
+    assert "not APPROVED" in result.message
+
+
+def test_execute_simulates_once_genuinely_approved(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "DB_PATH", str(tmp_path / "approval_state.db"))
+    db.init_db()
+
+    rec = Recommendation(
+        ticker="TEST", recommended_action=Action.BUY,
+        suggested_qty=1, price_at_analysis=100.0,
+    )
+    db.save_recommendation(rec)
+    db.update_status(rec.recommendation_id, RecStatus.APPROVED, "approved by user")
+
+    result = order_manager.execute_recommendation(rec, kite=_FakeKite(100.0))
+
+    # DUMMY_MODE defaults to True, so this must simulate — never place an order.
+    assert result.ok
+    assert result.simulated
+    assert result.status is RecStatus.SIMULATED
 
 
 def test_circuit_breaker_blocks_new_buys(monkeypatch, tmp_path):

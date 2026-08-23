@@ -53,7 +53,7 @@ def fetch_close(symbol: str) -> pd.Series | None:
 warnings.filterwarnings("ignore")
 
 HERE = Path(__file__).resolve().parent
-JSON_PATH = HERE.parent / "dashboard" / "data" / "arima_trend.json"
+JSON_PATH = HERE / "results" / "arima_trend.json"
 
 HORIZON = 15            # trading days ahead — same as the GBM model
 UP_THRESH = 0.04

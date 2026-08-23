@@ -9,11 +9,14 @@
 // only immutable hashed build assets, (4) purges old caches on activate.
 //
 // ⚠️ Bump CACHE_VERSION on every meaningful release (or when in doubt).
-const CACHE_VERSION = "2026-07-06a";
+const CACHE_VERSION = "2026-08-17a";
 const CACHE = `investai-${CACHE_VERSION}`;
 
 // Only precache tiny, stable things. NOT "/" — the dashboard must be live.
-const PRECACHE = ["/manifest.json"];
+// offline.html is the navigation fallback: previously that fell back to
+// manifest.json, i.e. raw JSON rendered where a page was expected.
+const OFFLINE_URL = "/offline.html";
+const PRECACHE = ["/manifest.json", OFFLINE_URL];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).catch(() => {}));
@@ -44,7 +47,7 @@ self.addEventListener("fetch", (e) => {
   if (req.mode === "navigate") {
     e.respondWith(
       fetch(req).catch(() =>
-        caches.match(req).then((r) => r || caches.match("/manifest.json"))
+        caches.match(req).then((r) => r || caches.match(OFFLINE_URL))
       )
     );
     return;

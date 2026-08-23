@@ -18,8 +18,10 @@ the conversation history for the honest failures that led here.
 Storage tiers (same design as run_backtest.py):
   - HEAVY: local SQLite `backtest.db` — feature table + a running prediction
     history (gitignored, stays on the PC).
-  - TINY: `dashboard/data/ml_trend.json` — today's predictions + honest
-    validation stats, bundled with the dashboard.
+  - TINY: `backtest/results/ml_trend.json` — today's predictions + honest
+    validation stats. NOT bundled with the dashboard: the walk-forward numbers
+    never beat a naive baseline, so nothing here is rendered in the UI (see
+    AGENT.md 2026-08-12). Kept as a research record.
 
 Self-grading loop: every run first grades any of ITS OWN past predictions
 whose target date has now arrived (Correct/Wrong, same idea as the live
@@ -52,7 +54,7 @@ warnings.filterwarnings("ignore")
 
 HERE = Path(__file__).resolve().parent
 DB_PATH = HERE / "backtest.db"
-JSON_PATH = HERE.parent / "dashboard" / "data" / "ml_trend.json"
+JSON_PATH = HERE / "results" / "ml_trend.json"
 
 HORIZON = 5             # trading days ahead — shortened from 15 after two honest
                         # attempts (GBM, ARIMA) failed to beat baseline at 15d;
